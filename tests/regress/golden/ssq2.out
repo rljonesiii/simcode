@@ -1,0 +1,9 @@
+
+===> for 10000 jobs <===
+average interarrival time .. =   2.02
+average wait ............... =   3.86
+average delay .............. =   2.36
+average service time ....... =   1.50
+average # in the node ...... =   1.91
+average # in the queue ..... =   1.17
+utilization ................ =   0.74

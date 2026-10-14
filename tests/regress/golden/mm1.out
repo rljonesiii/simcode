@@ -1,0 +1,14 @@
+
+for 9998587 jobs the node statistics are:
+
+  avg interarrivals .. =   1.00
+  avg wait ........... =   3.99
+  avg # in node ...... =   3.99
+  avg delay .......... =   3.19
+  avg # in queue ..... =   3.19
+
+the server statistics are:
+
+    server     utilization     avg service        share
+       1          0.800            0.80           1.000
+

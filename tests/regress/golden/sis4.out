@@ -1,0 +1,10 @@
+
+Enter a positive integer seed (9 digits or less) >> 
+for 100 time intervals with an average demand of  29.21
+an average lag of 0.48 and policy parameters (s, S) = (20, 80)
+
+   average order ............ =  30.09
+   setup frequency .......... =   0.39
+   average holding level .... =  30.13
+   average shortage level ... =   1.56
+

@@ -1,0 +1,10 @@
+
+Steady-State Simulation
+
+  batch size.........:  1000
+  number of batches..:  60
+  confidence level...:  95%
+  confidence interval:  +/- 5%
+
+Expected number of jobs in the system:  14.3359 +/- 0.6757
+Expected wait time of a job..........:  17.2721 +/- 0.8141

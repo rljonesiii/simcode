@@ -1,0 +1,18 @@
+
+Enter a positive integer seed (9 digits or less) >> 
+for 10025 jobs the node statistics are:
+
+  avg interarrivals .. =   2.00
+  avg wait ........... =   7.96
+  avg # in node ...... =   3.99
+  avg delay .......... =   1.94
+  avg # in queue ..... =   0.97
+
+the server statistics are:
+
+    server     utilization     avg service        share
+       1          0.754            6.04           0.249
+       2          0.755            5.97           0.252
+       3          0.754            6.05           0.249
+       4          0.757            6.05           0.250
+

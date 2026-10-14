@@ -1,0 +1,10 @@
+
+Enter a positive integer seed (9 digits or less) >> 
+for 10025 jobs, with feedback probability 0.20
+   average interarrival time =   1.99
+   average wait ............ =  20.74
+   average delay ........... =  18.85
+   average service time .... =   1.89
+   average # in the node ... =  10.38
+   average # in the queue .. =   9.43
+   utilization ............. =   0.94

@@ -1,0 +1,16 @@
+
+for a bivariate sample of size 82
+
+mean.u ...... = 486.707
+stdev.u ..... = 101.153
+min.u ....... = 290.000
+max.u ....... = 730.000
+
+mean.v ...... = 610.988
+stdev.v ..... =  26.530
+min.v ....... = 520.000
+max.v ....... = 663.000
+
+correlation ...... =   0.590
+theta (radians) .. =   0.625
+theta (degrees) .. =  35.814

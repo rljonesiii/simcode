@@ -1,0 +1,5 @@
+
+v1 = 73.3611, v2 = 128.422
+
+Of the 256 tests, 13 failed with probability 0.95,
+  6 were less than v1 and 7 were greater than v2.

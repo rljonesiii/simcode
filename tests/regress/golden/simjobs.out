@@ -1,0 +1,10 @@
+
+for 1000 jobs, with feedback probability 0.00
+   average interarrival time =   0.98
+   average wait ............ =   3.87
+   AVERAGE WAIT ............ =   3.87
+   average delay ........... =   3.08
+   average service time .... =   0.79
+   average # in the node ... =   3.93
+   average # in the queue .. =   3.13
+   utilization ............. =   0.81

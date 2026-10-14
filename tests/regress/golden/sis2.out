@@ -1,0 +1,8 @@
+
+for 100 time intervals with an average demand of  27.68
+and policy parameters (s, S) = (20, 80)
+
+average order ............ =  27.68
+setup frequency .......... =   0.36
+average holding level .... =  44.81
+average shortage level ... =   0.14

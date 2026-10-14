@@ -1,0 +1,23 @@
+queue is empty.
+put 2
+put 3
+put 1
+put 4
+queue is not empty.
+#queue = 4
+took 1.000000
+took 2.000000
+queue is not empty.
+#queue = 2
+took 3.000000
+took 4.000000
+queue is empty.
+#queue = 0
+put 5
+put 2
+put 6
+queue is not empty.
+took 2.000000
+took 5.000000
+took 6.000000
+queue is empty.

@@ -1,0 +1,9 @@
+
+for 10025 jobs, with feedback probability 0.20
+   average interarrival time =   1.99
+   average wait ............ =  21.37
+   average delay ........... =  19.48
+   average service time .... =   1.89
+   average # in the node ... =  10.70
+   average # in the queue .. =   9.75
+   utilization ............. =   0.95

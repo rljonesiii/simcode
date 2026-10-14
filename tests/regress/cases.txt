@@ -1,0 +1,58 @@
+# Regression cases: each program is built from the listed sources, run with a
+# fixed seed, and its stdout+stderr compared byte-for-byte to golden/<name>.out.
+#
+# name | sources (resolved in regress/fixtures/ first, then the source root) | extra CFLAGS | stdin file | check
+#
+# check is empty for an exact diff against golden/<name>.out, or "sha256" for
+# cases whose output is too large to store: golden/<name>.sha256 then holds the
+# digest and line count of the output.
+#
+# Golden files were generated on macOS/arm64 with Apple clang and libm.  A
+# different platform or libm can change low-order digits; regenerate with
+# `make golden` and review the diff before committing.
+
+# ---- queuing network simulator (qnsim), the example network from section 9.5.4
+qnsim_ss_fifo         | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ss.c example954.c |                     |
+qnsim_ss_sjf          | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ss.c example954.c | -DSJF_QUEUE         |
+qnsim_ss_jackson      | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ss.c example954.c | -DJACKSON           |
+qnsim_ss_sjf_jackson  | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ss.c example954.c | -DSJF_QUEUE -DJACKSON |
+qnsim_ts_fifo         | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ts.c example954.c |                     |
+qnsim_ts_sjf          | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ts.c example954.c | -DSJF_QUEUE         |
+qnsim_ts_plot         | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ts.c example954.c | -DPLOT              |        | sha256
+
+# qnsim with jobs present at time zero (Initial); the SJF case hung before the
+# qnet.c loop fix.  The FIFO case loads 1 job per node (known FIFO Initial bug).
+qnsim_ss_fifo_initial | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ss.c initial_model.c |               |
+qnsim_ss_sjf_initial  | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ss.c initial_model.c | -DSJF_QUEUE   |
+qnsim_ts_sjf_initial  | rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ts.c initial_model.c | -DSJF_QUEUE   |
+
+# ---- textbook simulations (Park & Geyer) and course exercises, fixed seeds
+ssq2       | ssq2.c rng.c                     |  |
+ssq3       | ssq3.c rngs.c                    |  |
+ssq4       | ssq4.c rngs.c rvgs.c             |  | seed.txt
+sis2       | sis2.c rng.c                     |  |
+sis3       | sis3.c rngs.c                    |  | seed.txt
+sis4       | sis4.c rngs.c rvgs.c             |  | seed.txt
+msq        | msq.c rngs.c                     |  | seed.txt
+galileo    | galileo.c rng.c                  |  | seed.txt
+mm1        | mm1.c rngs.c                     |  |
+ex446      | ex446.c rngs.c                   |  |
+ex84x      | ex84x.c rngs.c rvgs.c rvms.c sort.c |  |
+exC3       | exC3.c rngs.c rvms.c             |  |
+exC7       | exC7.c rngs.c rvms.c sort.c      |  |
+algC2      | algC2.c rngs.c rvms.c            |  |
+algC4      | algC4.c rngs.c rvms.c            |  |
+simjobs    | simjobs.c rngs.c rvgs.c rvms.c   |  |
+tsimjobs   | tsimjobs.c rngs.c rvgs.c rvms.c sort.c |  |
+montecarloint | montecarloint.c rngs.c rvgs.c rvms.c |  |
+gamble-eqn | gamble-eqn.c                     |  |
+sieve      | sieve.c                          |  |
+fp         | fp.c                             |  |
+sjf_queue_demo | testit.c queue.c misc.c      | -DSJF_QUEUE |
+
+# ---- data analysis tools reading one value per line from stdin
+ddh        | ddh.c                            |  | ddh.dat
+uvs        | uvs.c                            |  | ddh.dat
+bvs        | bvs.c                            |  | bvs.dat
+acs        | acs.c                            |  | ddh.dat
+estimate   | estimate.c rvms.c                |  | data
