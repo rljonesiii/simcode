@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "rngs.h"
@@ -5,7 +6,7 @@
 int count1 = 0;
 int count2 = 0;
 
-double Triangle(double a, double b, double c)
+static double Triangle(double a, double b, double c)
 /*
 *  returns a Triangle-distributed random number where
 *  a = min value, b = max value, and c = mode
@@ -23,7 +24,7 @@ double Triangle(double a, double b, double c)
 }
 
 /* {6.0,11.0,7.0}, {9.0,16.0,11.0}; */
-void main()
+int main(void)
 {
   const double a = 9.0; 
   const double b = 16.0; 

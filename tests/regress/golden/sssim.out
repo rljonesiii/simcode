@@ -1,0 +1,10 @@
+
+number of data points =  1000
+batch size........... =  1000
+confidence level..... =  95%
+arrival rate......... =  1
+service rate......... =  1.25
+feedback prob........ =  0
+
+    AVERAGE WAIT..... =  3.9861 +/- 0.0734
+

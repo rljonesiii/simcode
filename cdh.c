@@ -9,12 +9,13 @@
  *                     command-line argument passing added -- R.L.Jones      *
  * ------------------------------------------------------------------------- */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h> 
 
 #define  sqr(x)  ((x) * (x))
 
-#define MIN   -1/20.0           /* min value */
+#define MIN   (-1/20.0)         /* min value */
 #define MAX    1.0               /* max value */
 #define K      21                /* number of bins */
 #define DELTA  ((MAX - MIN) / K) /* histogram bin size (width) */
@@ -24,10 +25,8 @@
 /* ============== */
    int main
 /* ============== */
-  (int  argc,
-   char **argv)
+  (void)
 {
-  char   *arg;
   double x;                                      /* data value          */
   long   j;                                      /* histogram bin index */
   long   index    = 0;                           /* sample size         */
@@ -49,11 +48,20 @@
 
   if ((count = (long *)calloc(K, sizeof(long))) == NULL) {
     printf("\nError allocating memory.\n");
+    return EXIT_FAILURE;
   }
   if ((midpoint = (double *)calloc(K, sizeof(double))) == NULL) {
     printf("\nError allocating memory.\n");
+    free(count);
+    return EXIT_FAILURE;
   }
-  fp = fopen("cdh.gpd", "w");
+  fp = fopen("cdh.gpd", "w");                    /* plot data file */
+  if (fp == NULL) {
+    printf("\nError: unable to create cdh.gpd.\n");
+    free(count);
+    free(midpoint);
+    return EXIT_FAILURE;
+  }
 
   for (j = 0; j < K; j++) 
     midpoint[j] = MIN + (j + 0.5) * DELTA;

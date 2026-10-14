@@ -7,9 +7,11 @@
   Last Updated: 2/3/97
 ****************************************************************/
 
+#include "sort.h"
+
 void Sort(double *list, long first, long last)
 {
-  int    i, j;
+  long   i, j;
   double tmp;
 
   for (i = first; i < last; i++) {

@@ -17,28 +17,28 @@
 #define STOP 10000L                             /* number of jobs processed */
 
 /* ============================ */
-   double Exponential(double m)                 /* use m > 0.0 */
+   static double Exponential(double m)                 /* use m > 0.0 */
 /* ============================ */
 {                                       
   return (-m * log(1.0 - Random()));     
 }
 
 /* ================================== */
-   double Uniform(double a, double b)           /* use a < b */
+   static double Uniform(double a, double b)           /* use a < b */
 /* ================================== */
 {                                         
   return (a + (b - a) * Random());    
 }
 
 /* ============================ */
-   double GetInterarrival(void)
+   static double GetInterarrival(void)
 /* ============================ */
 {                                               
   return (Exponential(2.0));
 }
 
 /* ======================= */
-   double GetService(void)
+   static double GetService(void)
 /* ======================= */
 {
   return (Uniform(1.0, 2.0));

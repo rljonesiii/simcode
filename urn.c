@@ -22,7 +22,7 @@
 #define N 1000000L  /* number of replications */
 #define n 5         /* number of black balls = number of white balls */
 
-long Equilikely(long a, long b) /* use a < b */
+static long Equilikely(long a, long b) /* use a < b */
 {
   return (a + (long) ((b - a + 1) * Random()));
 }
@@ -60,7 +60,7 @@ int main(void)
     } else {
       v = 0;
     }
-    printf("%d %d\n",u,v);
+    printf("%ld %ld\n",u,v);
   }
 }
 

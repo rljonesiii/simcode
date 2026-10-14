@@ -1,0 +1,26 @@
+# clang-tidy configuration (run with: cmake --workflow --preset lint).
+# Bug-finding checks are on and fail the lint build.  Checks that only flag
+# the intentional style of this 1990s numeric code are off: implicit
+# int/long/double conversions, unchecked printf return values, scanf/atoi
+# conversion reporting, and the C11 Annex K "secure" function suggestions.
+Checks: >
+  -*,
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  -clang-analyzer-deadcode.DeadStores,
+  bugprone-*,
+  -bugprone-narrowing-conversions,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-inc-dec-in-conditions,
+  cert-*,
+  -cert-err33-c,
+  -cert-err34-c,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  performance-*,
+  portability-*
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'

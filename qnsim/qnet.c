@@ -11,23 +11,22 @@
 *******************************************************************************/
 
 #include "qnet.h"
-#include "queue.h"
 #include "misc.h"
 
 /* GLOBAL DATA: */
 
 qnt        type         = CLOSED;       /* assume closed network              */ 
 int        num_nodes    = 0;            /* number of service nodes            */
-queue_type *queue       = NULL;         /* no. jobs in each service queue     */
-actvty     *status      = NULL;         /* status of each service node        */
-double     **P          = NULL;         /* cumulative prob matrix             */
-double     *rates       = NULL;         /* stores expectations of rates       */
-rv_func    *random_time = NULL;         /* list of functions that return the  */
+queue_type *queue       = nullptr;         /* no. jobs in each service queue     */
+actvty     *status      = nullptr;         /* status of each service node        */
+double     **P          = nullptr;         /* cumulative prob matrix             */
+double     *rates       = nullptr;         /* stores expectations of rates       */
+rv_func    *random_time = nullptr;         /* list of functions that return the  */
                                         /* arrival/service time for each node */
-char Use_Error[] 
+static const char Use_Error[]
      = "Must first define the number of nodes with function \"Nodes\"\n";
 
-void Init()
+void Init(void)
 /******************************************************************************
   called by main program to initialize data structures
 *******************************************************************************/
@@ -36,11 +35,11 @@ void Init()
 
   if (num_nodes > 0) {
     /* consistency check */
-    if (type == OPEN && random_time[0].func == NULL) {
+    if (type == OPEN && random_time[0].func == nullptr) {
       error("Must specify an arrival-time function for open networks.");
     }
     for (i = 1; i < num_nodes; i++) {
-      if (random_time[i].func == NULL) {
+      if (random_time[i].func == nullptr) {
         error("Must specify a service-time function for every service node.");
       }
     }
@@ -57,7 +56,7 @@ void Init()
   
 }
 
-void Initialize()
+void Initialize(void)
 /******************************************************************************
   called by main program to (re)initialize the state of the queuing network
 *******************************************************************************/
@@ -89,29 +88,29 @@ void Nodes(int n)
   *  create probability matrix 
   */
   P = (double **)calloc(num_nodes,sizeof(double *)); /* allocate the rows    */
-  if (P == NULL) {
+  if (P == nullptr) {
     error(MEM_ERR);
   }
   for (i = 0; i < num_nodes; i++) {                  /* allocate the columns */
     P[i] = (double *)calloc(num_nodes,sizeof(double)); 
-    if (P[i] == NULL) {
+    if (P[i] == nullptr) {
       error(MEM_ERR);
     }
   } 
   /* 
   *  create list of random variate functions to call to compute
   *  the arrival/service time of each node
-  *  note: calloc initializes random_time[] to NULL
+  *  note: calloc initializes random_time[] to null pointers
   */ 
   random_time = (rv_func *)calloc(num_nodes,sizeof(rv_func));
-  if (random_time == NULL) {
+  if (random_time == nullptr) {
     error(MEM_ERR);
   }
   /* 
   *  create list to store the expected values of arrival and service rates
   */
   rates = (double *)calloc(num_nodes,sizeof(double));
-  if (rates == NULL) {
+  if (rates == nullptr) {
     error(MEM_ERR);
   }
   /* 
@@ -119,14 +118,14 @@ void Nodes(int n)
   *  note: calloc initializes status[] to IDLE
   */
   status = (actvty *)calloc(num_nodes,sizeof(actvty));
-  if (status == NULL) {
+  if (status == nullptr) {
     error(MEM_ERR);
   }
   /* 
   *  create list of pointers to each service queue 
   */
   queue = (queue_type *)calloc(num_nodes,sizeof(queue_type));
-  if (queue == NULL) {
+  if (queue == nullptr) {
     error(MEM_ERR);
   }
   /* initialize each queue */
@@ -140,20 +139,20 @@ void Connect(int i, int j, double p)
   user function that connects service node 'i' to node 'j' with probability 'p'
 *******************************************************************************/
 {
-  if (P != NULL) {
+  if (P != nullptr) {
     P[i][j] = p;
   } else {
     error(Use_Error);
   }
 }
 
-void Arrival(double (*func)(), double r)
+void Arrival(double (*func)(void), double r)
 /******************************************************************************
   user function that specifies the external inter-arrival time function 
   where the parameter 'r' gives the average arrival rate 
 *******************************************************************************/
 {
-  if (random_time != NULL) {
+  if (random_time != nullptr) {
     type = OPEN;
     random_time[0].func = func;
     rates[0]            = r;
@@ -162,7 +161,7 @@ void Arrival(double (*func)(), double r)
   }
 } 
 
-void Service(int i, double (*func)(), double r)
+void Service(int i, double (*func)(void), double r)
 /******************************************************************************
   user function that assigns a service-time function to node 'i' 
   where the parameter 'r' gives the average rate of service
@@ -170,7 +169,7 @@ void Service(int i, double (*func)(), double r)
 {
   if (i <= 0) {
     error("Service node identifiers must be greater than zero.");
-  } else if (random_time == NULL) {
+  } else if (random_time == nullptr) {
     error(Use_Error);
   } else {
     random_time[i].func = func;
@@ -183,18 +182,14 @@ void Initial(int i, long j)
   user function that initializes service node 'i' with 'j' jobs
 *******************************************************************************/
 {
-  double job_time = 0;  /* job service time */
-  long   k;
-
-  if (queue == NULL) {
+  if (queue == nullptr) {
     error(Use_Error);
   } else {
 
 #ifdef SJF_QUEUE /* if SJF then sample/store service time */
     SelectStream(i);
-    for (k = 0; k < j; k++) {
-      job_time = random_time[i].func();
-      Insert(&queue[i],job_time);
+    for (long k = 0; k < j; k++) {
+      Insert(&queue[i], random_time[i].func());
     }
 #else /* otherwise, just store the number of jobs */
     Insert(&queue[i],j);

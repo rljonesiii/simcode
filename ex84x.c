@@ -20,6 +20,7 @@
  * ------------------------------------------------------------------------- 
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "rngs.h"              
@@ -28,21 +29,21 @@
 #include "sort.h"
 
 #define PLOT
-#define _OUTPUT_FOR_ESTIMATE
+/* #define OUTPUT_FOR_ESTIMATE */
 
 #define BATCHSIZE      16             /* batch size           */
 #define NUMBATCHES     1024           /* number of batches    */
 #define LOC            0.95           /* level of confidence  */
-#define INFINITY       1e300          /* a large number       */
+#define NEVER       1e300          /* a large number       */
 
-#define lambda         1.0            /* job arrival rate     */
-#define nu             1.25           /* job service rate     */
-#define BETA           0.0            /* feedback probability */
+static constexpr double lambda = 1.0;   /* job arrival rate     */
+static constexpr double nu     = 1.25;  /* job service rate     */
+static constexpr double BETA   = 0.0;   /* feedback probability */
 
 int rns;
 
 /* ============================== */
-   double Min(double a, double c)
+   static double Min(double a, double c)
 /* ============================== */
 { 
   if (a < c)
@@ -52,7 +53,7 @@ int rns;
 } 
 
 /* ======================== */
-   double GetInterarrival()              
+   static double GetInterarrival()              
 /* ======================== */          
 {
   SelectStream(rns); 
@@ -60,7 +61,7 @@ int rns;
 } 
 
 /* =================== */
-   double GetService()                 
+   static double GetService()                 
 /* =================== */             
 {
   SelectStream(rns);
@@ -68,7 +69,7 @@ int rns;
 } 
 
 /* ================= */
-   int GetFeedback()
+   static int GetFeedback()
 /* ================= */
 {
   SelectStream(2);
@@ -79,7 +80,7 @@ int rns;
 }
   
 /* ============== */
-   int sssim(void)
+   static int sssim(void)
 /* ============== */
 {
   struct {
@@ -96,18 +97,26 @@ int rns;
   long   index;             /* used to count departed jobs              */
   long   seed = 123456789;  /* random number generator seed             */
   double *wait;             /* to gather sample wait times              */
+  long   capacity;          /* wait[1..capacity] is allocated           */
   double aw;                /* batch mean of wait times                 */
   double avg_w, var_w;      /* mean, var of wait times from batch means */
-  double delta, u, tstar; 
+  double delta, u, tstar = 0.0; 
   /* 
   *  initialize 
   */
   PlantSeeds(seed);
-  wait = (double *)calloc(BATCHSIZE*NUMBATCHES,sizeof(double));
-  wait = &wait[-1];
+  /* wait[1..capacity], indexed by job number.  Arrivals run ahead of
+     departures, so the array grows on demand.  (2026: was a fixed array
+     of BATCHSIZE*NUMBATCHES, which the final arrivals overran.) */
+  capacity = BATCHSIZE*NUMBATCHES;
+  wait = (double *)calloc(capacity + 1, sizeof(double));
+  if (wait == NULL) {
+    fprintf(stderr, "Error allocating memory.\n");
+    exit(EXIT_FAILURE);
+  }
   t.current    = 0.0;                           /* set the clock             */
   t.arrival    = t.current + GetInterarrival(); /* schedule first arrival    */
-  t.completion = INFINITY;                      /* first event != completion */
+  t.completion = NEVER;                      /* first event != completion */
   aindex = 0; 
   index  = 0; 
   avg_w  = 0.0;
@@ -133,6 +142,15 @@ int rns;
 
       if (t.current == t.arrival)  {          /* process an arrival */
         aindex++;
+        if (aindex > capacity) {              /* make room for this job */
+          double *grown = (double *)realloc(wait, (2*capacity + 1)*sizeof(double));
+          if (grown == NULL) {
+            fprintf(stderr, "Error allocating memory.\n");
+            exit(EXIT_FAILURE);
+          }
+          wait      = grown;
+          capacity *= 2;
+        }
         /* store arrival time for this job */
         wait[aindex] = t.arrival;
         number++;
@@ -155,7 +173,7 @@ int rns;
           if (number > 0)
             t.completion = t.current + GetService();
           else
-            t.completion = INFINITY;
+            t.completion = NEVER;
          }
       }
     } /*end while*/ 
@@ -199,7 +217,7 @@ int rns;
 #endif
 #endif
 
-  free(&wait[1]);
+  free(wait);
 
   return (0);
 }

@@ -24,11 +24,11 @@
 #include "rvgs.h"
 
 #define STOP      20000.0                /* terminal (close the door) time */
-#define INFINITY  (100.0 * STOP)         /* must be much larger than STOP  */
+#define NEVER  (100.0 * STOP)         /* must be much larger than STOP  */
 #define BETA      0.2                    /* feedback probability           */
 
 /* ============================== */
-   double Min(double a, double c)
+   static double Min(double a, double c)
 /* ============================== */
 { 
   if (a < c)
@@ -38,7 +38,7 @@
 } 
 
 /* ======================== */
-   double GetInterarrival()              /* returns an Exponential random */
+   static double GetInterarrival()              /* returns an Exponential random */
 /* ======================== */           /* variate with mean 2.0         */
 {
   SelectStream(0); 
@@ -46,7 +46,7 @@
 } 
 
 /* =================== */
-   double GetService()                   /* returns an 5-stage Erlang    */
+   static double GetService()                   /* returns an 5-stage Erlang    */
 /* =================== */                /* random variate with mean 1.5 */
 {
   SelectStream(1);
@@ -54,7 +54,7 @@
 }  
 
 /* ================= */
-   int GetFeedback()
+   static int GetFeedback()
 /* ================= */
 {
   SelectStream(2);
@@ -74,7 +74,7 @@
     double current;                 /* current time                        */
     double next;                    /* next (most imminent) event time     */
     double last;                    /* last arrival time                   */
-  } t;
+  } t = {};                  /* C23 empty initializer: all times zero */
   struct {
     double node;                    /* time integrated number in the node  */
     double queue;                   /* time integrated number in the queue */
@@ -86,7 +86,7 @@
   PlantSeeds(0);
   t.current    = 0.0;                           /* set the clock            */
   t.arrival    = t.current + GetInterarrival(); /* schedule first arrival   */
-  t.completion = INFINITY;                      /* first event != completion */
+  t.completion = NEVER;                      /* first event != completion */
 
   while ((t.arrival < STOP) || (number != 0)) {
     t.next          = Min(t.arrival, t.completion);  /* next event time   */
@@ -102,7 +102,7 @@
       t.arrival     = t.current + GetInterarrival();
       if (t.arrival > STOP)  {
         t.last      = t.current;
-        t.arrival   = INFINITY;
+        t.arrival   = NEVER;
       }
       if (number == 1)
         t.completion = t.current + GetService();
@@ -117,7 +117,7 @@
         if (number > 0)
           t.completion = t.current + GetService();
         else
-          t.completion = INFINITY;
+          t.completion = NEVER;
        }
     }
   } 

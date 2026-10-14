@@ -1,0 +1,16 @@
+# clang-format configuration approximating the existing style (2-space
+# indent, opening brace of a function on its own line).  The 1997-2002
+# sources have NOT been mass-reformatted, to keep their history readable;
+# use this for new code and for files you are substantially rewriting:
+#   /opt/homebrew/opt/llvm/bin/clang-format -i <file>
+BasedOnStyle: LLVM
+IndentWidth: 2
+ColumnLimit: 80
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+AlignConsecutiveMacros: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignTrailingComments: true
+AllowShortFunctionsOnASingleLine: Inline
+SortIncludes: Never

@@ -14,27 +14,34 @@
  * Latest Revision   : 12-08-95                                              * 
  * ------------------------------------------------------------------------- */
 
-#include <stdio.h>                              
+#include <stdio.h>
+#include <stdlib.h>                              
 
 #define FILENAME  "ssq1.dat"                   /* input data file */
 
 /* ============================== */
-   double GetInterarrival(FILE *fp)            /* read an interarrival time */
+   static double GetInterarrival(FILE *fp)            /* read an interarrival time */
 /* ============================== */
 { 
   double r;
 
-  fscanf(fp, "%lf", &r);
+  if (fscanf(fp, "%lf", &r) != 1) {
+    fprintf(stderr, "Error: unreadable arrival time in data file.\n");
+    exit(EXIT_FAILURE);
+  }
   return (r);
 }
 
 /* =========================== */
-   double GetService(FILE *fp)                 /* read a service time */
+   static double GetService(FILE *fp)                 /* read a service time */
 /* =========================== */
 { 
   double s;
 
-  fscanf(fp, "%lf\n", &s);
+  if (fscanf(fp, "%lf\n", &s) != 1) {
+    fprintf(stderr, "Error: unreadable service time in data file.\n");
+    exit(EXIT_FAILURE);
+  }
   return (s);
 }
 

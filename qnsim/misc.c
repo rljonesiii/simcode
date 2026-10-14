@@ -1,18 +1,20 @@
 /******************************************************************************
 *                                                                             *
-*  mics.c                                                                     *
+*  misc.c                                                                     *
 *                                                                             *
 *  Version:  30-April-97                                                      *
 *                                                                             *
 *******************************************************************************/
 
-void error(const char message[])
+#include <stdio.h>
+#include <stdlib.h>
+#include "misc.h"
+
+void error(const char *message)
 /******************************************************************************
   prints error message and then exits program
 *******************************************************************************/
 {
-  printf("%s",message);
-  exit(0);
+  fputs(message, stderr);
+  exit(EXIT_FAILURE);
 }
-
-

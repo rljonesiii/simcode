@@ -29,10 +29,10 @@ typedef struct {
   long      index;
   bivariate data;
   bivariate sum = {0.0, 0.0};
-  bivariate mean;
+  bivariate mean = {0.0, 0.0};
   bivariate stdev;
-  bivariate min;
-  bivariate max;
+  bivariate min = {0.0, 0.0};
+  bivariate max = {0.0, 0.0};
   bivariate diff;
   double    cosum = 0.0;
   double    covariance;
@@ -41,8 +41,7 @@ typedef struct {
   double    theta;
   double    pi = 4.0 * atan(1.0);
 
-  scanf("%lf %lf\n", &data.u, &data.v);
-  if (!feof(stdin)) {
+  if (scanf("%lf %lf\n", &data.u, &data.v) == 2 && !feof(stdin)) {
     index = 1;
     mean  = data;
     min   = data;
@@ -52,7 +51,8 @@ typedef struct {
     index = 0;
 
   while (!feof(stdin)) {
-    scanf("%lf %lf\n", &data.u, &data.v);
+    if (scanf("%lf %lf\n", &data.u, &data.v) != 2)
+      break;
     index++;
     temp    = (index - 1.0) / index;
     diff.u  = data.u - mean.u;

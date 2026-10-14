@@ -18,7 +18,7 @@ double alpha = 0.05;
 double a = 0.0;
 double b = 4.0;
 
-   double TruncatedExpo(double m, double c)
+   [[maybe_unused]] static double TruncatedExpo(double m, double c)
 /* ====================================================================
  * Returns a truncated exponentially distributed positive real number, 
  * truncated for values greater than "c".
@@ -30,7 +30,7 @@ double b = 4.0;
 }
 
 // function to be integrated 
-double g(double x)
+static double g(double x)
 {
   if (x >= a && x <= b) 
     //return exp(-x*x/2)/SQRT2PI;
@@ -39,7 +39,7 @@ double g(double x)
     return 0.0;
 }
 
-double sample_f()
+static double sample_f()
 {
 #ifdef STANDARD
   return Uniform(a, b);
@@ -48,7 +48,7 @@ double sample_f()
 #endif
 }
 
-double f(double x)
+static double f(double x)
 {
   if (x >= 0 && x <= b) 
 #ifdef STANDARD

@@ -1,5 +1,5 @@
-# test suite scratch builds
-tests/build/
+# CMake build trees (presets put them under build/)
+/build/
 
 # compiled artifacts (rebuildable from source; the originals are SunOS SPARC
 # and Cygwin binaries that do not run here)

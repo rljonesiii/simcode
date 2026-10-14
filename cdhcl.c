@@ -9,12 +9,14 @@
  *                     command-line argument passing added -- R.L.Jones      *
  * ------------------------------------------------------------------------- */
 
+#include <ctype.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h> 
 
 #define  sqr(x)  ((x) * (x))
 
-void usuage()
+[[noreturn]] static void usuage(void)
 {
   printf("CONTINUOUS-DATA HISTOGRAM\n");
   printf("usuage : cdh -s # -l # -n #\n");
@@ -30,7 +32,6 @@ void usuage()
   (int  argc,
    char **argv)
 {
-  char   *arg;
   double x;                                      /* data value          */
   long   j;                                      /* histogram bin index */
   long   index    = 0;                           /* sample size         */
@@ -44,75 +45,65 @@ void usuage()
   double sumsqr   = 0.0;
   double mean;
   double stdev;
-  float  MIN;
-  float  MAX;
-  int    K;      /* number of bins */
+  float  MIN = 0.0f;
+  float  MAX = 0.0f;
+  int    K   = 0;  /* number of bins */
   double DELTA;  /* bin size */
   
   FILE   *fp;
 
-  /* get command line arguments */
-  if (argc == 7) {
-    while (*++argv && **argv == '-') {
-      for (arg=*argv+1; *arg != '\0'; arg++) {
-        switch(*arg) {
-          case 'n': /* number of bins */ 
-            arg++;
-            argv++;
-            if (isdigit(*argv[0]) != 0) {
-              K = (int)atoi(*argv);
-              *arg = '\0';
-            } else {
-              usuage();
-            }
-            break;
-          case 's': /* min value */ 
-            arg++;
-            argv++;
-            if (isdigit(*argv[0]) != 0) {
-              MIN = (float)atoi(*argv);
-              *arg = '\0';
-            } else {
-              usuage();
-            }
-            break;
-          case 'l': /* max value */ 
-            arg++;
-            argv++;
-            if (isdigit(*argv[0]) != 0) {
-              MAX = (float)atoi(*argv);
-              *arg = '\0';
-            } else {
-              usuage();
-            }
-            break;
-        }
-      }
-    }
-  } else {
+  /* get command line arguments: three "-x value" pairs in any order.
+     (2026: rewritten; the 1997 parser stepped past the end of each
+     option string into the next argument.) */
+  if (argc != 7) {
     usuage();
   }
+  for (int a = 1; a < argc; a += 2) {
+    const char *opt = argv[a];
+    const char *val = argv[a + 1];
+    if (opt[0] != '-' || opt[1] == '\0' || opt[2] != '\0'
+        || isdigit((unsigned char) val[0]) == 0) {
+      usuage();
+    }
+    switch (opt[1]) {
+      case 'n': K   = atoi(val);        break;   /* number of bins */
+      case 's': MIN = (float)atoi(val); break;   /* min value      */
+      case 'l': MAX = (float)atoi(val); break;   /* max value      */
+      default:  usuage();                        /* unknown option */
+    }
+  }
 
-  if (K <= 0) {
+  if (K <= 0 || MAX <= MIN) {   /* an option was missing or repeated */
     printf("Error: Must specify nonzero value for number of bins.\n");
+    usuage();
   }
 
   if ((count = (long *)calloc(K, sizeof(long))) == NULL) {
     printf("\nError allocating memory.\n");
+    return EXIT_FAILURE;
   }
   if ((midpoint = (double *)calloc(K, sizeof(double))) == NULL) {
     printf("\nError allocating memory.\n");
+    free(count);
+    return EXIT_FAILURE;
   }
 
   DELTA = ((MAX - MIN) / K); /* histogram bin size (width) */
 
-  fp = fopen("cdh.gpd", "w");
+  fp = fopen("cdh.gpd", "w");                    /* plot data file */
+  if (fp == NULL) {
+    printf("\nError: unable to create cdh.gpd.\n");
+    free(count);
+    free(midpoint);
+    return EXIT_FAILURE;
+  }
 
   for (j = 0; j < K; j++) 
     midpoint[j] = MIN + (j + 0.5) * DELTA;
 
   while (!feof(stdin)) {                         /* tally the data */
-    scanf("%lf\n", &x);
+    if (scanf("%lf\n", &x) != 1)
+      break;
     index++;
     if ((x >= MIN) && (x < MAX)) {
       j = (long) ((x - MIN) / DELTA);
@@ -155,6 +146,8 @@ void usuage()
     printf("NOTE: there were %ld high outliers\n", outliers.hi);
 
   fclose(fp);
+  free(count);
+  free(midpoint);
   return (0);
 }
 

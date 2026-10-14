@@ -9,7 +9,7 @@
 *  RUN(fn)                     runs test fn (skipped if argv[1] filter given  *
 *                              and is not a substring of the test name)       *
 *  mt_isolate(fn, secs, &res)  runs fn in a forked child with a timeout,      *
-*                              capturing stdout; used for code that calls     *
+*                              capturing stdout+stderr; for code that calls   *
 *                              exit() via error() or that might hang          *
 *  MT_MAIN_BEGIN / MT_MAIN_END wrap main()                                    *
 *******************************************************************************/
@@ -78,7 +78,7 @@ static const char *mt_filter   = NULL;
  * Process isolation.  Child exit codes:
  *   MT_CHILD_RETURNED  fn returned normally with no failed CHECKs
  *   MT_CHILD_FAILED    fn returned but a CHECK inside the child failed
- *   anything else      fn called exit() itself (simcode's error() exits 0)
+ *   anything else      fn called exit() itself (simcode's error() exits 1)
  * ------------------------------------------------------------------------ */
 #define MT_CHILD_RETURNED 101
 #define MT_CHILD_FAILED   102
@@ -88,10 +88,10 @@ typedef struct {
   int  exit_code;    /* valid when exited                             */
   int  timed_out;    /* child was killed by the alarm                 */
   int  signal;       /* signal number when !exited                    */
-  char out[8192];    /* captured stdout (truncated, NUL terminated)   */
+  char out[8192];    /* captured output (truncated, NUL terminated)   */
 } mt_result;
 
-static void mt_isolate(void (*fn)(void), unsigned seconds, mt_result *r)
+[[maybe_unused]] static void mt_isolate(void (*fn)(void), unsigned seconds, mt_result *r)
 {
   int     fd[2];
   pid_t   pid;
@@ -106,7 +106,8 @@ static void mt_isolate(void (*fn)(void), unsigned seconds, mt_result *r)
   if (pid < 0) { perror("fork"); exit(2); }
   if (pid == 0) {                       /* child */
     close(fd[0]);
-    dup2(fd[1], STDOUT_FILENO);
+    dup2(fd[1], STDOUT_FILENO);         /* capture stdout and stderr */
+    dup2(fd[1], STDERR_FILENO);
     close(fd[1]);
     signal(SIGALRM, SIG_DFL);
     alarm(seconds);

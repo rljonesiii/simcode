@@ -27,6 +27,7 @@
  * ------------------------------------------------------------------------- 
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "rngs.h"                        /* the multi-stream generator */
@@ -38,13 +39,13 @@
 #define JOBS      1000        /* terminate after processing this many jobs */
 #define MAXREP    320         /* max replications                          */
 #define STOP      20000.0     /* terminal (close the door) time            */
-#define INFINITY  (100.0 * STOP)         /* must be much larger than STOP  */
+#define NEVER  (100.0 * STOP)         /* must be much larger than STOP  */
 #define BETA      0.0                    /* feedback probability           */
 
 double sqrt(double x);
 
 /* ============================== */
-   double Min(double a, double c)
+   static double Min(double a, double c)
 /* ============================== */
 { 
   if (a < c)
@@ -54,7 +55,7 @@ double sqrt(double x);
 } 
 
 /* ======================== */
-   double GetInterarrival()              /* returns an Exponential random */
+   static double GetInterarrival()              /* returns an Exponential random */
 /* ======================== */           /* variate with mean 1.0         */
 {
   SelectStream(0); 
@@ -62,7 +63,7 @@ double sqrt(double x);
 } 
 
 /* =================== */
-   double GetService()                   /* returns an Exponential random */
+   static double GetService()                   /* returns an Exponential random */
 /* =================== */                /* variate with mean 1.0         */
 {
   SelectStream(1);
@@ -71,7 +72,7 @@ double sqrt(double x);
 
 
 /* ================= */
-   int GetFeedback()
+   static int GetFeedback()
 /* ================= */
 {
   SelectStream(2);
@@ -110,8 +111,7 @@ double sqrt(double x);
 
   PlantSeeds(seed);
 
-  X = (double *)calloc(MAXREP,sizeof(double));
-  X = &X[-1];
+  X = (double *)calloc(MAXREP + 1,sizeof(double));    /* used as X[1..MAXREP] */
 
   for (rep = 1; rep <= MAXREP; rep++) {
     /* 
@@ -124,7 +124,7 @@ double sqrt(double x);
     area.service = 0.0;
     t.current    = 0.0;                           /* set the clock            */
     t.arrival    = t.current + GetInterarrival(); /* schedule first arrival   */
-    t.completion = INFINITY;                      /* first event != completion */
+    t.completion = NEVER;                      /* first event != completion */
 
     while (index < JOBS) {
       t.next          = Min(t.arrival, t.completion);  /* next event time   */
@@ -145,7 +145,7 @@ double sqrt(double x);
         t.arrival     = t.current + GetInterarrival();
         if (t.arrival > STOP)  {
           t.last      = t.current;
-          t.arrival   = INFINITY;
+          t.arrival   = NEVER;
         }
         if (number == 1)
           t.completion = t.current + GetService();
@@ -159,7 +159,7 @@ double sqrt(double x);
           if (number > 0)
             t.completion = t.current + GetService();
           else
-            t.completion = INFINITY;
+            t.completion = NEVER;
          }
       }
     } /*end while*/ 

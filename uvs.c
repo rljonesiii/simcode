@@ -43,15 +43,14 @@
 {
   long    index;
   double  data;
-  double  sumsqr;
-  double  mean;
+  double  sumsqr = 0.0;
+  double  mean   = 0.0;
   double  stdev;
-  double  min;
-  double  max;
+  double  min    = 0.0;
+  double  max    = 0.0;
   double  diff;
 
-  scanf("%lf\n", &data);
-  if (!feof(stdin)) {
+  if (scanf("%lf\n", &data) == 1 && !feof(stdin)) {
     index  = 1;
     mean   = data;
     sumsqr = 0.0;
@@ -62,7 +61,8 @@
     index = 0;
 
   while (!feof(stdin)) {
-    scanf("%lf\n", &data);
+    if (scanf("%lf\n", &data) != 1)
+      break;
     index++;
     diff    = data - mean;
     sumsqr += diff * diff * (index - 1.0) / index;

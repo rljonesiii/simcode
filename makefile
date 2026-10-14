@@ -1,34 +1,32 @@
+# Convenience wrapper around the CMake presets in CMakePresets.json.
+# (The original 1997-2002 makefiles are kept as makefile.mci,
+# makefile.qnsim and makefile.bak for reference; they no longer build.)
+#
+#   make            configure, build and test with sanitizers (dev preset)
+#   make release    optimized build and test
+#   make lint       compile everything through clang-tidy
+#   make golden     regenerate regression golden files (review the diff!)
+#   make clean      delete all build trees
 
-SYSINCLUDES = -I/usr/include
-MYINCLUDES = -I.
-STDLIBS     = -lm -lfl
+.PHONY: all test build release lint golden clean
 
-SOURCES = rngs.c rvgs.c rvms.c sort.c sssim.c
+all: test
 
-OBJS = $(SOURCES:.c=.o) 
+test:
+	cmake --workflow --preset dev
 
-ALLCCS = $(SOURCES) 
+build:
+	cmake --preset dev
+	cmake --build --preset dev
 
-ALLHHS = $(ALLCCS:.c=.h)
+release:
+	cmake --workflow --preset release
 
-ALLOBJS = $(OBJS) 
+lint:
+	cmake --workflow --preset lint
 
-# MOREFLAGS       = -g
-LINKFLAGS 	= $(PLAT_LINK) $(LINKINCLUDES)
-CXX 		= g++
-CC		= g++
-CPPFLAGS 	= $(MOREFLAGS) -Wall $(SYSINCLUDES) $(MYINCLUDES) $(PLAT_FLAGS)
-EXES		= sssim
+golden: build
+	cmake --build --preset dev --target golden
 
-all:	$(EXES)
-
-sssim : $(ALLOBJS)
-	$(CXX) $(LINKFLAGS) $(ALLOBJS) -o sssim $(STDLIBS) $(PLAT_LIBS)
-
-depend:
-	cd $(SOURCEDIR); g++ $(CPPFLAGS) -MM $(ALLCCS) > ./make.depend
-
-clean :
-	rm -f *.o $(EXES) errlog.dat 
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
+clean:
+	rm -rf build

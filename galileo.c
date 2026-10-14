@@ -13,7 +13,7 @@
 #define N 10000L                          /* number of replications */
 
 /* =============================== */
-   long Equilikely(long a, long b)        /* use a < b */
+   static long Equilikely(long a, long b)        /* use a < b */
 /* =============================== */
 {
   return (a + (long) ((b - a + 1) * Random()));

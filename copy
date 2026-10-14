@@ -14,7 +14,5 @@ cp qnet.h	qnsim
 cp qnsim.c	qnsim
 cp qnsim.h	qnsim
 cp qnsim-ts.c	qnsim
-cp qnsim-ts.h	qnsim
 cp qnsim-ss.c	qnsim
-cp qnsim-ss.h	qnsim
 cp example954.c qnsim

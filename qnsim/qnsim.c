@@ -12,7 +12,7 @@
 *******************************************************************************/
 
 #include "qnet.h"
-#include "queue.h"
+#include "qnsim.h"
 #include "misc.h"
 
 
@@ -23,9 +23,6 @@ void ProcessArrival(long i, double time, double *future_events)
   If the job is serviced, the job's departure is also scheduled.
 *******************************************************************************/
 {
-  extern rv_func    *random_time;        /* sample function    */
-  extern actvty     *status;             /* server status      */
-  extern queue_type *queue;              /* service queue      */
   double job_time   = 0;                 /* job service time   */
 
   if (status[i] == IDLE) { /* if idle then service job */
@@ -52,9 +49,6 @@ void ServiceJob(long i, double time, double *future_events)
   the current 'time' thereby scheduling the departure of the job.
 *******************************************************************************/
 {
-  extern rv_func    *random_time;        /* sample function    */
-  extern actvty     *status;             /* server status      */
-  extern queue_type *queue;              /* service queue      */
   double job_time   = 0;                 /* job service time   */
 
   Remove(&queue[i],&job_time);

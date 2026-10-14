@@ -9,6 +9,7 @@
   for Exercise C.7
 
 ******************************************************/
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "rvms.h"
@@ -22,7 +23,7 @@
 double log(double x);
 double exp(double x);
 
-void main()
+int main(void)
 {
   long x, i, k;        /* indices                 */
   long rns;            /* rng stream              */
@@ -39,6 +40,10 @@ void main()
   *  compute k
   */
   k = 1 + (long)(log(10.0/ndelta)/log(1.0-delta));
+  if (k < 1) {
+    fprintf(stderr, "Error: histogram size must be positive.\n");
+    return EXIT_FAILURE;
+  }
   /* 
   *  allocate memory for histogram 
   */
@@ -49,7 +54,7 @@ void main()
   v1 = idfChisquare(k,alpha/2);
   v2 = idfChisquare(k,1-alpha/2);
 
-  printf("\nk = %d, v1 = %g, v2 = %g\n",k,v1,v2);
+  printf("\nk = %ld, v1 = %g, v2 = %g\n",k,v1,v2);
 
   PlantSeeds(231886580);
 
@@ -72,7 +77,7 @@ void main()
         x = k;
       }
       o[x] += 1;
-      if (0) printf("x=%d\n",x);
+      if (0) printf("x=%ld\n",x);
     }
     /*
     *  compute chi-square statistic
@@ -100,6 +105,6 @@ void main()
   /*
   *  the test results... 
   */
-  printf("\nOf the %d tests, %d failed with probability %g,\n",256,num_below+num_above,1-alpha);
-  printf("  %d were less than v1 and %d were greater than v2.\n",num_below,num_above);
+  printf("\nOf the %d tests, %ld failed with probability %g,\n",256,num_below+num_above,1-alpha);
+  printf("  %ld were less than v1 and %ld were greater than v2.\n",num_below,num_above);
 }/*end*/

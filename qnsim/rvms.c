@@ -85,7 +85,7 @@ static double InBeta(double a, double b, double x);
    return ((u < 1.0 -p) ? 0 : 1);
 }
 
-   double pdfEquilikely(long a, long b, long x)
+   double pdfEquilikely(long a, long b, [[maybe_unused]] long x)
 /* ============================================ 
  * NOTE: use a <= x <= b 
  * ============================================
@@ -264,7 +264,7 @@ static double InBeta(double a, double b, double x);
    return (x);
 }
 
-   double pdfUniform(double a, double b, double x)
+   double pdfUniform(double a, double b, [[maybe_unused]] double x)
 /* =============================================== 
  * NOTE: use a < x < b 
  * ===============================================

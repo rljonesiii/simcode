@@ -16,35 +16,35 @@
 
 #ifdef JACKSON
 
-double service1() 
+static double service1(void)
 {
   return(Exponential(1.0/nu1));
 }
-double service2() 
+static double service2(void)
 {
   return(Exponential(1.0/nu2));
 }
 
 #else
 
-double service1() 
+static double service1(void)
 {
   return(Erlang(5,2.0/7.0));
 }
-double service2()
+static double service2(void)
 {
   return(Erlang(4,5.0/16.0));
 }
 
 #endif
 
-double Expo()
+static double Expo(void)
 {
   return(Exponential(1.0/lambda));
 }
 
 
-void Network()
+void Network(void)
 /******************************************************************************
   define the queuing network here
 *******************************************************************************/
@@ -75,7 +75,7 @@ void Network()
   Service(5,service2,nu2);
 }
 
-void InitialState()
+void InitialState(void)
 /******************************************************************************
   define the initial state of the queuing network here
 *******************************************************************************/

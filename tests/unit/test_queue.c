@@ -7,7 +7,7 @@ static void starts_empty(void)
 {
   queue_type q;
   CreateQueue(&q);
-  CHECK(IsEmpty(&q) == TRUE);
+  CHECK(IsEmpty(&q) == true);
   CHECK(Number(&q) == 0);
 }
 
@@ -20,13 +20,13 @@ static void insert_and_remove_track_count(void)
   Insert(&q, 3.0);
   Insert(&q, 1.0);
   CHECK(Number(&q) == 3);
-  CHECK(IsEmpty(&q) == FALSE);
+  CHECK(IsEmpty(&q) == false);
   Remove(&q, &v);
   CHECK(Number(&q) == 2);
   Remove(&q, &v);
   Remove(&q, &v);
   CHECK(Number(&q) == 0);
-  CHECK(IsEmpty(&q) == TRUE);
+  CHECK(IsEmpty(&q) == true);
 }
 
 static void flush_empties_queue(void)
@@ -37,7 +37,7 @@ static void flush_empties_queue(void)
   Insert(&q, 2.0);
   FlushQueue(&q);
   CHECK(Number(&q) == 0);
-  CHECK(IsEmpty(&q) == TRUE);
+  CHECK(IsEmpty(&q) == true);
   Insert(&q, 7.0);                 /* still usable after a flush */
   CHECK(Number(&q) == 1);
   DeleteQueue(&q);
@@ -57,7 +57,7 @@ static void removes_shortest_job_first(void)
   for (i = 0; i < 7; i++) Insert(&q, in[i]);
   for (i = 0; i < 7; i++) { Remove(&q, &v); if (v != want[i]) ok = 0; }
   CHECK(ok);
-  CHECK(IsEmpty(&q) == TRUE);
+  CHECK(IsEmpty(&q) == true);
   DeleteQueue(&q);
 }
 

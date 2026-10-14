@@ -20,24 +20,24 @@
 #define MINIMUM    20             /* 's' inventory policy parameter >= 0 */
 #define MAXIMUM    80             /* 'S' inventory policy parameter > s  */
 #define STOP       100.0
-#define INFINITY   (100.0 * STOP)
+#define NEVER   (100.0 * STOP)
 
 /* ============================ */
-   double Exponential(double m)
+   static double Exponential(double m)
 /* ============================ */
 {
   return (-m * log(1.0 - Random()));
 }
 
 /* ================================== */
-   double Uniform(double a, double b)                         
+   static double Uniform(double a, double b)                         
 /* ================================== */
 {                                  
   return (a + (b - a) * Random());  
 }
 
 /* =========================== */
-   double GetInterdemand(void)
+   static double GetInterdemand(void)
 /* =========================== */
 {                                         
   SelectStream(0);                        /* generate an interdemand time */
@@ -45,7 +45,7 @@
 }
 
 /* =================== */
-   double GetLag(void)
+   static double GetLag(void)
 /* =================== */
 {                                         
   SelectStream(1);                        /* generate a delivery lag time  */
@@ -53,7 +53,7 @@
 }
 
 /* ======================================== */
-   double Min(double a, double b, double c)    
+   static double Min(double a, double b, double c)    
 /* ======================================== */
 {                                     /* returns the minimum of a, b, c */
   double t = a;            
@@ -92,7 +92,7 @@
   t.current = 0.0;
   t.demand  = t.current + GetInterdemand(); /* schedule the first demand */
   t.review  = t.current + 1.0;              /* schedule the first review */
-  t.arrive  = INFINITY;                     /* no order arrival pending  */
+  t.arrive  = NEVER;                     /* no order arrival pending  */
 
   while (t.current < STOP) {
     t.next          = Min(t.demand, t.review, t.arrive);
@@ -123,7 +123,7 @@
     else {                           /* process an inventory order arrival*/
       inventory += order;
       order      = 0;
-      t.arrive   = INFINITY;
+      t.arrive   = NEVER;
     }
   } 
 

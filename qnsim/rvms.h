@@ -6,8 +6,8 @@
  * -------------------------------------------------------------- 
  */
 
-#if !defined( _RVMS_ )
-#define _RVMS_
+#if !defined( RVMS_H )
+#define RVMS_H
 
 double LogFactorial(long n);
 double LogChoose(long n, long m);

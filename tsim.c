@@ -35,11 +35,11 @@
 #define STOP      1000.0                /* terminal (close the door) time */
 #define MAXREP    50000                /* max replications               */
 
-#define INFINITY  (100.0 * STOP)         /* must be much larger than STOP  */
+#define NEVER  (100.0 * STOP)         /* must be much larger than STOP  */
 #define BETA      0.0                    /* feedback probability           */
 
 /* ============================== */
-   double Min(double a, double c)
+   static double Min(double a, double c)
 /* ============================== */
 { 
   if (a < c)
@@ -49,7 +49,7 @@
 } 
 
 /* ======================== */
-   double GetInterarrival()              /* returns an Exponential random */
+   static double GetInterarrival()              /* returns an Exponential random */
 /* ======================== */           /* variate with mean 1.0         */
 {
   SelectStream(0); 
@@ -57,7 +57,7 @@
 } 
 
 /* =================== */
-   double GetService()                   /* returns a 4-stage Erlang    */
+   static double GetService()                   /* returns a 4-stage Erlang    */
 /* =================== */                /* random variate with mean 0.8 */
 {
   SelectStream(1);
@@ -66,7 +66,7 @@
 
 
 /* ================= */
-   int GetFeedback()
+   static int GetFeedback()
 /* ================= */
 {
   SelectStream(2);
@@ -93,7 +93,7 @@
     double service;                 /* time integrated number in service   */
   } area;
   long number;                      /* number in the node                  */
-  long index;                       /* used to count departed jobs         */
+  [[maybe_unused]] long index;      /* used to count departed jobs         */
   long seed = 123456789;            /* random number generator seed        */
   long rep;
 
@@ -110,7 +110,7 @@
     area.service = 0.0;
     t.current    = 0.0;                           /* set the clock            */
     t.arrival    = t.current + GetInterarrival(); /* schedule first arrival   */
-    t.completion = INFINITY;                      /* first event != completion */
+    t.completion = NEVER;                      /* first event != completion */
 
     while (1) {
       t.next          = Min(t.arrival, t.completion);  /* next event time   */
@@ -131,7 +131,7 @@
         t.arrival     = t.current + GetInterarrival();
         if (t.arrival > STOP)  {
           t.last      = t.current;
-          t.arrival   = INFINITY;
+          t.arrival   = NEVER;
         }
         if (number == 1)
           t.completion = t.current + GetService();
@@ -146,7 +146,7 @@
           if (number > 0)
             t.completion = t.current + GetService();
           else
-            t.completion = INFINITY;
+            t.completion = NEVER;
          }
       }
     } /*end while*/ 

@@ -22,7 +22,7 @@
 #include "rngs.h"              
 #include "rvgs.h"
 #include "rvms.h"
-#include "queue.h"
+#include "circ_buf_queue.h"   /* FIFO queue (this module was queue.c in 1997) */
 /* 
 *  SIMULATION PARAMETERS:
 */
@@ -34,7 +34,7 @@
 #define BATCHSIZE      1000           /* batch size (must be > 1)   */
 #define NUM_BATCHES    1000           /* number of batches          */
 #define LOC            0.95           /* level of confidence        */
-#define INFINITY       1e300          /* a large number             */
+#define NEVER       1e300          /* a large number             */
 /* 
 *  EXPERIMENTS:   
 *
@@ -54,7 +54,6 @@
 /*
 *  GLOBAL DATA:
 */
-typedef enum bool {FALSE = 0, TRUE = 1} BOOL;
 /* 
 *  the graph topology is hard-wired...
 */
@@ -140,7 +139,7 @@ double cdf[NUM_CUSTOMERS+1];
 */
 double    time;                           /* current simulation time    */
 double    future_events[NUM_SERVERS+1];   /* future-events list         */
-BOOL      busy[NUM_SERVERS];              /* busy status of each server */
+bool      busy[NUM_SERVERS];              /* busy status of each server */
 /*
 *  Allocate a FIFO queue for each server if using LOOKAHEAD
 *  or only a single FIFO queue otherwise.  Operations for the queue(s)
@@ -162,7 +161,7 @@ QueueType queue;
 /*
 *  FUNCTIONS:
 */
-double GetInterarrival(float lambda)              
+static double GetInterarrival(double lambda)              
 /*
 *  returns ~Poisson distributed arrival events
 */
@@ -171,7 +170,7 @@ double GetInterarrival(float lambda)
   return (Exponential(1.0/lambda));
 } 
 
-void GetService(int server, int caller, 
+static void GetService(int server, int caller,
                 double *travelto, double *travelfrom, double *service) 
 /* 
 *  returns the travel plus service time for given 'server' and 'caller'
@@ -211,7 +210,7 @@ void GetService(int server, int caller,
   (*service)    = serv;
 } 
 
-int GetRequestLocation()
+static int GetRequestLocation(void)
 /*
 *  returns the location of request based on probability 
 *  distribution given by individual arrival rates
@@ -228,22 +227,22 @@ int GetRequestLocation()
   return(caller);
 }
 
-int ChooseServer(int caller)
+static int ChooseServer(int caller)
 /*
 *  returns the server with the (expected) minimum response time 
 */
 {
   int    i; 
   int    server       = 0;
-  double response     = INFINITY;
-  double min_response = INFINITY;
+  double response     = NEVER;
+  double min_response = NEVER;
   /* 
   *  In choosing the best mobile server, consider only the shortest path if not
   *  using LOOOKAHEAD; otherwise consider the busy servers as well by looking
   *  at the expected queue delay and time the server will be available. 
   */
   for (i = 0; i < NUM_SERVERS; i++) {
-    if (busy[i] == FALSE) {
+    if (busy[i] == false) {
       response  = shortest_paths[i][caller].delay;
     }
 #ifdef LOOKAHEAD
@@ -276,7 +275,6 @@ int main(int argc, char **argv)
   int    server;                    /* server index                  */
   long   batch;                     /* batch index                   */
   long   count;                     /* within-batch job index        */
-  long   index;                     /* event list index              */
   long   i, j;                      /* general-purpose indices       */
   long   seed = 123456789;          /* random number generator seed  */
   double lambda = 1.0;              /* aggregate arrival rate        */
@@ -304,7 +302,7 @@ int main(int argc, char **argv)
   future_events[arrival] = time + GetInterarrival(lambda); 
   /* ...not a departure */
   for (i = 0; i < NUM_SERVERS; i++) {         
-    future_events[i] = INFINITY;                    
+    future_events[i] = NEVER;                    
   }
   /* compute mean travel time for each path in graph */
   for (server = 0; server < NUM_SERVERS; server++) {
@@ -375,15 +373,15 @@ int main(int argc, char **argv)
           sum_response += (time - atime) + travelto;  
           count++;
           future_events[server] = time + travelto + travelfrom + service;
-          busy[server] = TRUE;
+          busy[server] = true;
         } else {
-          future_events[server] = INFINITY;
-          busy[server] = FALSE;
+          future_events[server] = NEVER;
+          busy[server] = false;
         }
       } else { /* process an arrival */
         caller = GetRequestLocation();   /* where did call originate?      */
         server = ChooseServer(caller);   /* returns the selected server    */
-        if (busy[server] == TRUE) {      /* queue caller if server is busy */ 
+        if (busy[server] == true) {      /* queue caller if server is busy */ 
 #ifdef LOOKAHEAD
           Put(&queues[server],caller,time);        
           queue_delay[server] += 2.0*shortest_paths[server][caller].delay 
@@ -397,7 +395,7 @@ int main(int argc, char **argv)
           sum_response += travelto; /* no queue delay, just travel! */ 
           count++;
           future_events[server] = time + travelto + travelfrom + service;
-          busy[server] = TRUE;
+          busy[server] = true;
         }
         /* schedule next arrival */ 
         future_events[arrival] = time + GetInterarrival(lambda); 

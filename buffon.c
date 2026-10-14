@@ -16,7 +16,7 @@
 #define R       1.0                        /* length of the needle   */
 
 /* ================================== */
-   double Uniform(double a, double b)      /* use a < b */
+   static double Uniform(double a, double b)      /* use a < b */
 /* ================================== */
 {
   return (a + (b - a) * Random());

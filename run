@@ -35,7 +35,7 @@ $initmsg
 
 set cfiles = "rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c $sim" 
 
-gcc $cf $def $cfiles $model -lm -o $target
+cc -std=c23 -Wall -Wextra -ffp-contract=off $cf $def $cfiles $model -lm -o $target
 
 if ("$model" != "") then
   $runmsg  

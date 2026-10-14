@@ -15,10 +15,10 @@
 
 #ifdef SJF_QUEUE
 
-list *free_nodes = NULL;
+static list *free_nodes = nullptr;   /* recycled list nodes */
 
 
-list *New()
+static list *New(void)
 /******************************************************************************
   Returns a new list structure (node). For more efficient memory management,
   a list of previously freed nodes is kept and used to later return new nodes.
@@ -27,9 +27,9 @@ list *New()
 {
   list *ptr;
 
-  if (free_nodes == NULL) {
+  if (free_nodes == nullptr) {
     ptr = (list *)malloc(sizeof(list));
-    if (ptr == NULL) {
+    if (ptr == nullptr) {
       error(MEM_ERR);
     }
   } else {
@@ -37,11 +37,11 @@ list *New()
     free_nodes = free_nodes->next;
   }
   ptr->item = (item_type)0;
-  ptr->next = NULL;
+  ptr->next = nullptr;
   return(ptr);
 }
 
-void Free(list *ptr)
+static void Free(list *ptr)
 /******************************************************************************
   Frees the node pointed to by 'ptr' and stores it in the free nodes list
   for later used.
@@ -56,7 +56,7 @@ void CreateQueue(queue_type *q)
   Initializes the queue structure to an empty state.
 *******************************************************************************/
 {
-  q->contents = NULL;
+  q->contents = nullptr;
   q->number   = 0;
 }
 
@@ -69,19 +69,19 @@ void DeleteQueue(queue_type *q)
   list *ptr, *nxt;
 
   ptr = First(q); 
-  while (ptr != NULL) {
+  while (ptr != nullptr) {
     nxt = Next(ptr);
     free(ptr);
     ptr = nxt;
   }
   ptr = free_nodes; 
-  while (ptr != NULL) {
+  while (ptr != nullptr) {
     nxt = Next(ptr);
     free(ptr);
     ptr = nxt;
   }
-  q->contents = NULL;
-  free_nodes  = NULL;
+  q->contents = nullptr;
+  free_nodes  = nullptr;
   q->number   = 0;
 }
 
@@ -94,12 +94,12 @@ void FlushQueue(queue_type *q)
   list *ptr, *nxt;
 
   ptr = First(q);
-  while (ptr != NULL) {
+  while (ptr != nullptr) {
     nxt = Next(ptr);
     Free(ptr);
     ptr = nxt;
   }
-  q->contents = NULL;
+  q->contents = nullptr;
   q->number   = 0;
 }
 
@@ -109,9 +109,9 @@ bool IsEmpty(queue_type *q)
 *******************************************************************************/
 {
   if (q->number == 0) {
-    return(TRUE);
+    return(true);
   } else {
-    return(FALSE);
+    return(false);
   }
 }
 
@@ -134,15 +134,15 @@ void Insert(queue_type *q, item_type v)
   list *new_entry = New();
 
   new_entry->item = v;
-  if (q->contents == NULL) { 
+  if (q->contents == nullptr) { 
     q->contents = new_entry;
   } else if (v <= q->contents->item) { 
     new_entry->next = q->contents;
     q->contents     = new_entry;
   } else {
-    for (ptr = q->contents; ptr != NULL; ptr = nxt) {
+    for (ptr = q->contents; ptr != nullptr; ptr = nxt) {
       nxt = ptr->next;
-      if (nxt == NULL) {
+      if (nxt == nullptr) {
         ptr->next = new_entry;
       } else if (v <= nxt->item) {
         new_entry->next = nxt;
@@ -161,7 +161,7 @@ void Remove(queue_type *q, item_type *v)
 {
   list *ptr = q->contents;
 
-  if (q->contents != NULL) {
+  if (q->contents != nullptr) {
     (*v) = q->contents->item;
     q->contents = q->contents->next;
     q->number--;

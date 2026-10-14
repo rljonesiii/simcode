@@ -37,10 +37,14 @@ struct node {
 typedef struct node *pointer;
 
 /* ======================================== */
-   void Initialize(pointer *p, double data)      /* initialize a new node */
+   static void Initialize(pointer *p, double data)      /* initialize a new node */
 /* ======================================== */
 {
   *p = malloc(sizeof(struct node));
+  if (*p == NULL) {
+    fprintf(stderr, "Error allocating memory.\n");
+    exit(EXIT_FAILURE);
+  }
 
   (*p)->value = data;
   (*p)->count = 1;
@@ -48,7 +52,7 @@ typedef struct node *pointer;
 }
 
 /* ===================================================== */
-   void Insert(pointer head, pointer *tail, double data)  
+   static void Insert(pointer head, pointer *tail, double data)  
 /* ===================================================== */
 {                                      /* add 'data' to list */
   int     found = 0;
@@ -72,7 +76,7 @@ typedef struct node *pointer;
 }
 
 /* =========================== */      /* traverse the list to compute the */
-   void Traverse(pointer head)         /* histogram stats and print the    */
+   static void Traverse(pointer head)         /* histogram stats and print the    */
 /* =========================== */      /* histogram                        */
 {                                         
   pointer  p;
@@ -121,7 +125,7 @@ typedef struct node *pointer;
 }
 
 /* ================================= */    /* swap the contents of the nodes */
-   void Swap(pointer *p, pointer *q)       /* to which 'p' and 'q' point     */
+   static void Swap(pointer *p, pointer *q)       /* to which 'p' and 'q' point     */
 /* ================================= */
 {                                          
   double value;
@@ -136,26 +140,19 @@ typedef struct node *pointer;
 }
 
 /* ======================= */
-  void Sort(pointer head)              /* selection sort - slow, but sure */
+  static void Sort(pointer head)              /* selection sort - slow, but sure */
 /* ======================= */
 {
   pointer p;                           /* the "outside" pointer       */
   pointer q;                           /* the "inside" pointer        */
-  double  min;                         /* the smallest unsorted value */
 
   p = head;
   while (p != NULL) {
-    q   = p;
-    min = q->value;
-    while (q != NULL) {                /* find the smallest unsorted value */
-      if (q->value < min)              /* - that is 'min'                  */
-        min = q->value;
-      q = q->next;
-    }
-    q = p;                             /* find the node containing 'min' */
-    while (q->value != min)            /* - 'q' is that node's pointer   */
-      q = q->next;
-    Swap(&p, &q);                      /* swap the contents of nodes p and q */
+    pointer m = p;                     /* first node holding the smallest */
+    for (q = p->next; q != NULL; q = q->next)  /* unsorted value       */
+      if (q->value < m->value)
+        m = q;
+    Swap(&p, &m);                      /* swap the contents of nodes p and m */
     p = p->next;
   }
 }
@@ -168,21 +165,26 @@ typedef struct node *pointer;
   pointer  tail;                       /* pointer to the tail of the list */
   double   data;
 
-  scanf("%lf\n", &data);
-  if (!feof(stdin))
+  if (scanf("%lf\n", &data) == 1 && !feof(stdin))
     Initialize(&head, data);
   else
     head = NULL;
   tail = head;
 
-  while (!feof(stdin))  {
-    scanf("%lf\n", &data);
+  while (head != NULL && !feof(stdin))  {
+    if (scanf("%lf\n", &data) != 1)
+      break;
     Insert(head, &tail, data);
   }
 
   if (head != NULL) {
     Sort(head);
     Traverse(head);
+  }
+  while (head != NULL) {               /* release the list */
+    pointer next = head->next;
+    free(head);
+    head = next;
   }
   return (0);
 }

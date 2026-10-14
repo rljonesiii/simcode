@@ -4,93 +4,68 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-An archive of ANSI C discrete-event simulation coursework (CSci 726, 1997, with some 2001–2002 revisions) by Rob Jones, built on the Park & Geyer "Discrete-Event Simulation" library. It is not a git repository. The root directory is a flat working area mixing sources, stale binaries (`*.exe`, `*.o`, `a.out`, Cygwin `*.stackdump`), output files, numbered backups (`qnsim.c.1`, `qnet.h.2`, `makefile~`) and tarballs. Treat binaries, `.o` files, `*.out`, and the numbered/`~` backups as artifacts, not sources.
+Discrete-event simulation coursework (CSci 726, 1997, revised 2001–2002) by Rob Jones, built on the Park & Geyer simulation library and modernized to C23 in 2026. The root is a flat directory: current sources sit next to historical snapshots (`qnet.c.1`, `qnsim.c.2`, `makefile~`), tarballs, data files and old binaries that `.gitignore` excludes. Only files listed in `CMakeLists.txt` are built.
 
-`qnsim/` is the clean, distributable copy of the queuing network simulator. Its files are identical to the same-named files in the root; the root `copy` script is what syncs them. If you change a qnsim source in one place, keep the other in sync.
+`qnsim/` is a distributable copy of the simulator and must stay identical to the root files of the same name. After editing any of them, run `sh ./copy` from the root; the `sync.qnsim` test fails otherwise.
 
-## Building on modern macOS / clang
+## Build and test
 
-The code is pre-C99 (implicit declarations, a custom `bool` enum in `misc.h`). Default clang rejects it, so always compile with:
-
-```
--std=gnu89 -w
-```
-
-### Queuing network simulator (qnsim)
-
-The csh driver `run` (also in `qnsim/`) compiles and runs a model. `run -h` prints usage. It calls plain `gcc` without `-std`, so on current clang build directly instead:
+CMake with presets; `make` at the root is a thin wrapper.
 
 ```bash
-gcc -std=gnu89 -w rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c qnsim-ss.c example954.c -lm -o example954 && ./example954
+make                     # = cmake --workflow --preset dev (debug + ASan/UBSan + all tests)
+make release             # optimized build + tests
+make lint                # build through clang-tidy (.clang-tidy, WarningsAsErrors)
+make golden              # regenerate tests/regress/golden/ (review the diff)
+ctest --preset dev -L unit                 # labels: unit, regress, sync
+ctest --preset dev -R regress.qnsim_ss_sjf # one regression case
+build/dev/bin/test_rvms student            # one unit binary, tests whose name contains "student"
 ```
 
-`run` flag → compile-time define / file swap:
-- `-t` → use `qnsim-ts.c` (transient) instead of `qnsim-ss.c` (steady-state, batch means)
-- `-sjf` → `-DSJF_QUEUE` (shortest-job-first queue instead of FIFO)
-- `-x` → `-DJACKSON` (model-defined alternative, e.g. exponential service in `example954.c`)
-- `-p` → `-DPLOT` (plot-friendly output in the transient driver)
-- `-d` → `-DDEBUG -g`
+Build trees are `build/<preset>/`, executables in `build/<preset>/bin/`. clang-tidy and current clang-format come from Homebrew LLVM (`/opt/homebrew/opt/llvm/bin`); the `clang-format` on PATH is version 10 and too old for `.clang-format`.
 
-### Other programs
+Compiler flags for every target: `-std=c23 -Wall -Wextra -Wpedantic -Wstrict-prototypes -Wmissing-prototypes -Wshadow -ffp-contract=off -Werror`. Consequences:
+- Every non-`main` function in a program must be `static` or have a prototype in a header.
+- `-ffp-contract=off` is what makes outputs bit-identical across Debug and Release. Do not remove it, or the golden files stop matching at higher optimization.
 
-Each standalone program is a single `.c` file linked against the library modules it includes, e.g.:
+## Rules for changing code
 
-```bash
-gcc -std=gnu89 -w ssq2.c rngs.c -lm -o ssq2
-gcc -std=gnu89 -w sssim.c rngs.c rvgs.c rvms.c sort.c -lm -o sssim     # what `makefile` builds
-gcc -std=gnu89 -w montecarloint.c rngs.c rvgs.c rvms.c -lm -o mci      # what `makefile.mci` builds
-gcc -std=gnu89 -w mobile-server.c rngs.c rvgs.c rvms.c queue.c -lm -o mssim   # what `go` does
-```
-
-`makefile` and `makefile.mci` use `g++` and link `-lfl` (flex), which is not needed and usually absent; drop it. `makefile.qnsim`/`makefile.bak` use a broken `$1` target and are obsolete. Data-analysis tools (`uvs`, `bvs`, `acs`, `cdh`, `ddh`) read one value per line from stdin, e.g. `./ddh < ddh.dat`.
+- **Output is the contract.** Any change to a program must leave its regression output byte-identical unless the change is meant to alter results. When a fix legitimately changes output, regenerate with `make golden` and say so.
+- `bool`/`true`/`false` are C23 keywords. Do not reintroduce `TRUE`/`FALSE` or a `bool` typedef.
+- `INFINITY` from `<math.h>` is not redefined anywhere. Programs use `NEVER` for "no event scheduled".
+- 1-based arrays are allocated with one extra element (`calloc(n + 1, ...)`). Never use the old `p = &p[-1]` idiom.
+- Do not mass-reformat historical sources. `.clang-format` is for new code and substantial rewrites.
 
 ## Tests
 
-The suite lives in `tests/` and is driven by `tests/Makefile`. Run it from that directory:
-
-```bash
-make test
-```
-
-- `make unit` builds and runs the unit tests with AddressSanitizer and UndefinedBehaviorSanitizer (`SANITIZE=` disables them). One binary, optionally filtered to tests whose name contains a word: `make build/unit/test_rvms && build/unit/test_rvms student`.
-- `make regress` builds 37 programs with fixed seeds and compares their output byte-for-byte with `tests/regress/golden/`. `make regress CASE=qnsim_ss` runs a subset.
-- `make sync` checks that `qnsim/` matches the root sources, ignoring whitespace.
-- `make golden` regenerates golden files. Only do this when an output change is intended, and review the diff. Goldens were made on macOS arm64 with Apple clang, so another platform may need regenerating.
-- `make unit regress SRC=/some/copy BUILD=/tmp/x` runs the suite against a different source tree, which is how fault-injection checks were done.
-
-How it is put together:
-- `tests/unit/minitest.h` is a self-contained harness. `CHECK_XFAIL` marks a known bug: it passes while the bug exists and fails with "XPASS" once fixed, so the marker must then become `CHECK`.
-- `test_qnet.c` runs every test in a forked child (`mt_isolate`) because qnet.c uses globals, reports user errors by calling `exit(0)`, and could hang. `test_queue.c` and `test_qnet.c` are each built twice, as FIFO and with `-DSJF_QUEUE`.
-- `tests/regress/cases.txt` lists each case as name, sources, extra flags, stdin file, and check mode. Sources resolve in `tests/regress/fixtures/` first, then the root. `fixtures/seed.txt` answers the seed prompt of programs that call `PlantSeeds(0)`. The `-DPLOT` case is 14.8M lines, so it is checked by SHA-256 digest (`check` column `sha256`).
-- The `algC2` golden matches the 2002 `output` file in the root exactly.
-
-Programs not covered because they do not build or run unattended: `MMck.c`, `monte_carlo.c` (stray text in source), `multiproc.c` (undeclared identifiers), `mobile-server.c` (its `bool` enum clashes with `misc.h`), `sssim.c` (C++, uses `new`), `model1.c`/`model2.c` (older `Arrival`/`Service` signatures without the rate argument), `ssq1.c`/`sis1.c` (their `.dat` input files are missing), `algC3.c` (segfaults at exit), `buffon.c` (clock-seeded), `gamble.c` (about 9 s), and `exF4`/`urn`/`urn2`/`test` (very large output).
+- `tests/unit/minitest.h` is a self-contained harness. `CHECK_XFAIL` marks a known bug: it passes while the bug exists and fails with "XPASS" once fixed, after which it must become `CHECK`.
+- `test_qnet.c` runs each test in a forked child (`mt_isolate`) because qnet.c keeps global state, reports user errors with `error()` (stderr, exit 1), and could hang. `test_queue.c` and `test_qnet.c` are each built twice, linked against `qnet_fifo` and `qnet_sjf`.
+- `tests/regress/cases.txt` maps a case name to a CMake target, a stdin file, arguments, and a check mode. CTest creates one `regress.<name>` test per line. Stdin files resolve in `tests/regress/fixtures/` first, then the root. `fixtures/seed.txt` answers the seed prompt of programs that call `PlantSeeds(0)`. Large outputs use the `sha256` check mode, which stores a digest and line count.
+- To add a program to regression: add a target in `CMakeLists.txt`, add a line to `cases.txt`, reconfigure, then `make golden`.
+- Reference points for correctness: `algC2`'s output matches the 2002 `output` file; `MMck` and `monte_carlo` match the 1997 output in the comment at the end of their sources.
 
 ## Architecture
 
-### Library layer (Park & Geyer, do not modify casually)
-- `rngs.c/h`: multi-stream Lehmer RNG (`PlantSeeds`, `SelectStream`, `Random`). `rng.c/h` is the older single-stream version used by some early programs; don't link both.
-- `rvgs.c/h`: random variate generators (`Exponential`, `Erlang`, `Normal`, ...).
-- `rvms.c/h`: pdf/cdf/idf functions, used for confidence intervals (`idfStudent`).
+### Libraries (CMakeLists.txt)
+- `simlib`: `rngs.c` (256-stream Lehmer generator: `PlantSeeds`, `SelectStream`, `Random`), `rvgs.c` (variates), `rvms.c` (pdf/cdf/idf, e.g. `idfStudent` for intervals) and `sort.c`.
+- `rng_single`: `rng.c`, the older single-stream generator. It defines the same `Random()` as `rngs.c`, so a program links one or the other.
+- `qnet_fifo` / `qnet_sjf`: the qnsim engine. The queue discipline is compile-time (`SJF_QUEUE`), so the engine is built twice; `qnet_sjf` exports the define.
 
-### Queuing network simulator
-Split into a reusable engine and a user-supplied model file:
-- `qnet.c/h`: global network state (`num_nodes`, routing matrix `P`, per-node `random_time` function pointers, `status`, `queue`) and the model-building API: `Nodes`, `Connect`, `Arrival`, `Service`, `Initial`. Node 0 is the external source/sink, so `Nodes(n)` allocates `n + 1` slots and `Init()` converts `P` rows to cumulative probabilities.
-- `queue.c/h`: compile-time-selected queue. FIFO (default) is just a job counter implemented as macros. `SJF_QUEUE` is a sorted linked list storing pre-sampled service times.
-- `qnsim.c/h`: shared event helpers `ProcessArrival` / `ServiceJob`. RNG stream `i` is used for node `i`.
-- `qnsim-ss.c` / `qnsim-ts.c`: alternative `main()` drivers (steady-state batch means vs. transient replications). Exactly one is linked. Statistics are referenced to node 0, so they only make sense for open networks.
-- Model file (e.g. `example954.c`): must define `Network()` and `InitialState()`, and the service/arrival functions passed to `Service`/`Arrival`.
+### qnsim
+- `qnet.h` declares the shared network state (`type`, `num_nodes`, `queue`, `status`, `random_time`) and the model API: `Nodes`, `Connect`, `Arrival`, `Service`, `Initial`. Node 0 is the external source/sink, so `Nodes(n)` allocates `n + 1` slots and `Init()` turns each routing row of `P` into cumulative probabilities.
+- `queue.h`: FIFO is a job counter implemented as `static inline` functions. `SJF_QUEUE` switches to the sorted list in `queue.c`, which stores service times sampled at arrival.
+- `qnsim.c`: `ProcessArrival` / `ServiceJob`. Node `i` uses random stream `i`.
+- `qnsim-ss.c` (batch means) and `qnsim-ts.c` (transient replications) are alternative `main()` drivers. Statistics are taken at node 0, so only open networks terminate.
+- A model file defines `Network()`, `InitialState()` and `static` time functions. `simcode_qnsim_model()` in `CMakeLists.txt` builds a model with a chosen driver and queue discipline.
 
-### Fixed bugs in qnet.c (2026-10-14, both copies)
-- `Init()` checked `random_time[i]` with `i <= num_nodes`, reading one past the array. The FIFO build aborted with "Must specify a service-time function for every service node." Now `<`.
-- `Initial()` under `SJF_QUEUE` incremented `j` instead of `k`, looping forever when a node started non-empty.
+### Other programs
+Each standalone program is one `.c` file registered with `simcode_program()`. `mobile-server.c` also links `circ_buf_queue.c`. `test.c` builds as `triangle-test` because CMake reserves the target name `test`. Not built: `multiproc.c` (unfinished), `simcore.c` and `triangle.c` (fragments).
 
-The backup files `qnet.c.1`, `qnet.c.2` and the tarballs still contain the old code.
+## Known open issues
+- FIFO `Initial(i, j)` loads one job, not `j`: the FIFO `Insert` adds one regardless of the value. Tracked by `CHECK_XFAIL` in `test_qnet.c`; the `qnsim_ss_fifo_initial` golden reflects it, so a fix must update both.
+- `model2.c` is a closed network and never terminates with either driver.
+- `mobile-server.c` has `CHECKGRAPH` defined (prints the graph and exits), and schedules its first arrival before reading the arrival rate from the command line.
+- `ssq1.c` and `sis1.c` need missing `.dat` files; `buffon.c` is clock-seeded.
 
-### Open bugs
-- **FIFO `Initial(i, j)` loads one job, not `j`.** The FIFO `Insert` macro in `queue.h` always increments by one. The unit tests mark this with `CHECK_XFAIL`, and the `qnsim_ss_fifo_initial` golden reflects the buggy behavior, so fixing it means updating both.
-- `error(MEM_ERR)` passes the integer 0 where `error()` expects a string.
-- `circ_buf_queue.c` includes `queue.h` instead of `circ_buf_queue.h`. Nothing uses it.
-
-### Results / notes
-`.notes` holds recorded results for Exercise 9.3.13 (gambler's-ruin simulation vs. a Markov chain solver), useful as reference values. `view.gps`/`view.gpc` and `cdh.gpd` are plotting scripts for program output.
+## Notes
+`.notes` holds recorded results for Exercise 9.3.13 (gambler's ruin, simulation vs. a Markov chain solver). `view.gps`/`view.gpc` are gnuplot scripts for program output.

@@ -9,7 +9,8 @@
 */
 
 #include <stdio.h>
-#include "queue.h"
+#include <stdlib.h>
+#include "circ_buf_queue.h"
 
 void InitQueue(QueueType *q, int size)
 /* 
@@ -17,6 +18,10 @@ void InitQueue(QueueType *q, int size)
 */
 {
   q->contents = (ItemType *)calloc(size,sizeof(ItemType));
+  if (q->contents == nullptr) {
+    fprintf(stderr,"Error: unable to allocate queue!\n");
+    exit(EXIT_FAILURE);
+  }
   q->max      = size;
   q->number   = 0;
   q->head     = 0;
@@ -42,20 +47,24 @@ void Put(QueueType *q, int c, double t)
   }
 }
 
-int Take(QueueType *q, int *c, double *t)
+bool Take(QueueType *q, int *c, double *t)
 {
 /*
-*  returns the contents c and t the head of queue q 
-*  (note: returns c = t = 0 if queue is empty)
+*  removes the head of queue q and returns its contents in c and t;
+*  returns false (leaving c and t unchanged) if the queue is empty.
+*  (2026: tests the count rather than head != tail, which also holds
+*  when the queue is completely full.)
 */
   ItemType *queue = q->contents;
 
-  if (q->head != q->tail) {
-    (*c)    = queue[q->head].index;
-    (*t)    = queue[q->head].time;
-    q->head = (q->head+1) % q->max;
-    q->number--;
+  if (q->number == 0) {
+    return false;
   }
+  (*c)    = queue[q->head].index;
+  (*t)    = queue[q->head].time;
+  q->head = (q->head+1) % q->max;
+  q->number--;
+  return true;
 }
 
 int NumberInQueue(QueueType *q)

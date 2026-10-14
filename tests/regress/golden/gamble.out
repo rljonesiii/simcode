@@ -1,0 +1,36 @@
+
+For initial state a=10
+with 10000 data points and 95% confidence
+    f(0) = 0.6787 +/- 0.01
+    f(k) = 0.3213 +/- 0.01
+    Expected Number of Plays = 15554.1
+
+
+For initial state a=20
+with 10000 data points and 95% confidence
+    f(0) = 0.4447 +/- 0.01
+    f(k) = 0.5553 +/- 0.01
+    Expected Number of Plays = 26951.6
+
+
+For initial state a=30
+with 10000 data points and 95% confidence
+    f(0) = 0.3009 +/- 0.01
+    f(k) = 0.6991 +/- 0.01
+    Expected Number of Plays = 33431.2
+
+
+For initial state a=40
+with 10000 data points and 95% confidence
+    f(0) = 0.2097 +/- 0.01
+    f(k) = 0.7903 +/- 0.01
+    Expected Number of Plays = 37497.7
+
+
+For initial state a=50
+with 10000 data points and 95% confidence
+    f(0) = 0.1392 +/- 0.01
+    f(k) = 0.8608 +/- 0.01
+    Expected Number of Plays = 40392.2
+
+

@@ -26,10 +26,10 @@
 #define LAMBDA      120.0          /* demand rate, per time interval > 0  */ 
 #define PROBABILITY 0.2            /* Pr(demand > 0), per demand instance */
 #define STOP        100.0          /* number of time intervals            */
-#define INFINITY   (100.0 * STOP)
+#define NEVER   (100.0 * STOP)
 
 
-   double GetInterdemand(void)
+   static double GetInterdemand(void)
 /* =============================================== 
  * generate an interdemand time with mean 1/LAMBDA
  * ===============================================
@@ -39,7 +39,7 @@
    return (Exponential(1.0 / LAMBDA));
 }
 
-   double GetLag(void)
+   static double GetLag(void)
 /* =================================================== 
  * generate a delivery lag uniform between 0.0 and 1.0
  * ===================================================
@@ -49,7 +49,7 @@
    return (Uniform(0.0, 1.0));
 }
 
-   long GetDemand(void)                   
+   static long GetDemand(void)                   
 /* =============================================================
  * generate a Geometric(p) inventory demand with p = PROBABILITY
  * ============================================================= 
@@ -59,7 +59,7 @@
    return (Geometric(PROBABILITY));
 }
 
-   double Min(double a, double b, double c)    
+   static double Min(double a, double b, double c)    
 /* ======================================== 
  * returns the minimum of a, b, c 
  * ========================================
@@ -99,7 +99,7 @@
   t.current = 0.0;                          /* set the clock             */
   t.demand  = t.current + GetInterdemand(); /* schedule the first demand */
   t.review  = t.current + 1.0;              /* schedule the first review */
-  t.arrive  = INFINITY;                     /* no order arrival pending  */
+  t.arrive  = NEVER;                     /* no order arrival pending  */
 
   while (t.current < STOP) {
     t.next          = Min(t.demand, t.review, t.arrive);
@@ -133,7 +133,7 @@
     else {                           /* process an inventory arrival*/
       inventory += order;
       order      = 0;
-      t.arrive   = INFINITY;
+      t.arrive   = NEVER;
     }
   } 
 

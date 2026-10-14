@@ -8,22 +8,24 @@
 *
 *  Algorithm C.2 test of extremes using S = min(U1, U2, ...Ud)
 */
+#include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "rvms.h"
 #include "rngs.h"
 
 #define k      100
-#define n      10*k
-#define ndivk  n/k
+#define n      (10*k)
+#define ndivk  ((double)n/k)      /* expected count per cell (exactly 10) */
 #define d      5
 #define alpha  0.05
 
-#define _PLOT
+/* #define PLOT */
 
 double log(double x);
 double exp(double x);
 
-void main()
+int main(void)
 {
   long x, i, j;        /* indices           */
   long t;              /* test index        */
@@ -37,8 +39,7 @@ void main()
   /* 
   *  allocate memory for histogram 
   */
-  o = (long *)calloc(k, sizeof(long));
-  o = &o[-1];
+  o = (long *)calloc(k + 1, sizeof(long));      /* used as o[1..k] */
   /*
   *  determine critical values v1 and v2
   */
@@ -95,7 +96,7 @@ void main()
   *  the test results... 
   */
 #ifndef PLOT
-  printf("\nOf the %d tests, %d failed with probability %g,\n",256,num_below+num_above,1-alpha);
-  printf("  %d were less than v1 and %d were greater than v2.\n",num_below,num_above);
+  printf("\nOf the %d tests, %ld failed with probability %g,\n",256,num_below+num_above,1-alpha);
+  printf("  %ld were less than v1 and %ld were greater than v2.\n",num_below,num_above);
 #endif
 }/*end*/

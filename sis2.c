@@ -17,14 +17,14 @@
 #define sqr(x)   ((x) * (x))
 
 /* =============================== */
-  long Equilikely(long a, long b)          /* use a < b */
+  static long Equilikely(long a, long b)          /* use a < b */
 /* =============================== */
 {
   return (a + (long) ((b - a + 1) * Random()));
 }
 
 /* ============================= */
-  long GetDemand(void)                 
+  static long GetDemand(void)                 
 /* ============================= */
 {                                             
   return (Equilikely(10, 50)); 

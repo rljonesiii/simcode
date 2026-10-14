@@ -1,0 +1,5 @@
+mu1 = 1     mu2 = 2     Theoretical E[T] = 2.33 	 Sim E[T] = 2.334 
+mu1 = 6     mu2 = 10    Theoretical E[T] = 12.25 	 Sim E[T] = 12.253 
+mu1 = 7     mu2 = 11    Theoretical E[T] = 13.72 	 Sim E[T] = 13.726 
+mu1 = 15    mu2 = 35    Theoretical E[T] = 39.50 	 Sim E[T] = 39.509 
+

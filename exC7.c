@@ -8,6 +8,7 @@
 *
 *  Algorithm C.4 gap test plus KS statistic
 */
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "rvms.h"
@@ -19,10 +20,10 @@
 #define b        0.96
 #define alpha    0.05
 
-#define _PLOT
+/* #define PLOT */
 #define max(x,y) (((x) > (y)) ? (x) : (y))
 
-void main()
+int main(void)
 {
   long x, i, k;        /* indices                 */
   long t;              /* rng stream              */
@@ -42,11 +43,14 @@ void main()
   *  compute k
   */
   k = 1 + (long)(log(10.0/ndelta)/log(1.0-delta));
+  if (k < 1) {
+    fprintf(stderr, "Error: histogram size must be positive.\n");
+    return EXIT_FAILURE;
+  }
 
   /* allocate memory */
   o = (long *)calloc(k+1, sizeof(long));
-  v = (double *)calloc(256, sizeof(double));
-  v = &v[-1];
+  v = (double *)calloc(256 + 1, sizeof(double)); /* used as v[1..256] */
   /*
   *  determine critical values v1 and v2
   */
@@ -54,7 +58,7 @@ void main()
   v2 = idfChisquare(k,1-alpha/2);
 
 #ifndef PLOT
-  printf("\nk = %d, v1 = %g, v2 = %g\n",k,v1,v2);
+  printf("\nk = %ld, v1 = %g, v2 = %g\n",k,v1,v2);
 #endif
 
   PlantSeeds(231886580);
@@ -122,8 +126,8 @@ void main()
     dt   = max(diff,dt);
   }
 #ifndef PLOT
-  printf("\nOf the %d tests, %d failed with probability %g,\n",256,num_below+num_above,1-alpha);
-  printf("  %d were less than v1 and %d were greater than v2.\n",num_below,num_above);
+  printf("\nOf the %d tests, %ld failed with probability %g,\n",256,num_below+num_above,1-alpha);
+  printf("  %ld were less than v1 and %ld were greater than v2.\n",num_below,num_above);
   printf("KS statistic for 256 tests is %g\n",dt);
 #endif
 }/*end*/

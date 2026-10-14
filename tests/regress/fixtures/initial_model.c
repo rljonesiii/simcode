@@ -8,9 +8,9 @@
 *******************************************************************************/
 #include "qnet.h"
 
-double arrive(void)   { return Exponential(2.0); }      /* rate 0.5 */
-double service1(void) { return Erlang(2, 1.0 / 3.0); }  /* mean 2/3 */
-double service2(void) { return Exponential(1.0); }      /* mean 1   */
+static double arrive(void)   { return Exponential(2.0); }      /* rate 0.5 */
+static double service1(void) { return Erlang(2, 1.0 / 3.0); }  /* mean 2/3 */
+static double service2(void) { return Exponential(1.0); }      /* mean 1   */
 
 void Network(void)
 {

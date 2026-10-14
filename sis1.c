@@ -15,7 +15,8 @@
  * Latest Revision   : 12-08-95                                              * 
  * ------------------------------------------------------------------------- */
 
-#include <stdio.h>                        
+#include <stdio.h>
+#include <stdlib.h>                        
 
 #define FILENAME  "sis1.dat"               /* input data file                */
 #define MINIMUM   20                       /* 's' inventory policy parameter */
@@ -23,12 +24,15 @@
 #define sqr(x)    ((x) * (x))
 
 /* ======================== */
-   long GetDemand(FILE *fp)            
+   static long GetDemand(FILE *fp)            
 /* ======================== */
 {
   long d;
 
-  fscanf(fp, "%ld\n", &d);
+  if (fscanf(fp, "%ld\n", &d) != 1) {
+    fprintf(stderr, "Error: unreadable demand in data file.\n");
+    exit(EXIT_FAILURE);
+  }
   return (d);
 }
 

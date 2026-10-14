@@ -26,6 +26,7 @@
  * ------------------------------------------------------------------------- */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include "rng.h"
 
@@ -76,7 +77,10 @@ static long seed = DEFAULT;
   if (x == 0L)                                
     while (!ok) {
       printf("\nEnter a positive integer seed (9 digits or less) >> ");
-      scanf("%ld", &x);
+      if (scanf("%ld", &x) != 1) {          /* EOF or non-numeric input */
+        fprintf(stderr, "\nNo valid seed on standard input.\n");
+        exit(EXIT_FAILURE);
+      }
       ok = (0L < x) && (x < MODULUS);
       if (!ok)
         printf("\nInput out of range ... try again\n");
@@ -102,11 +106,10 @@ static long seed = DEFAULT;
 {
   long   i;
   long   x;
-  double u;
 
   PutSeed(1);                                /* set initial seed to 1 */
   for(i = 0; i < 10000; i++)
-    u = Random();
+    (void) Random();
   GetSeed(&x);                               /* get the new seed value */
   if (x == CHECK) 
     printf("\n The implementation of Random is correct\n");

@@ -23,7 +23,7 @@
 
 #define n 5        /* number of black balls = number of white balls */
 
-long Equilikely(long a, long b) /* use a < b */
+static long Equilikely(long a, long b) /* use a < b */
 {
   return (a + (long) ((b - a + 1) * Random()));
 }
@@ -43,7 +43,6 @@ long Equilikely(long a, long b) /* use a < b */
 int main(void)
 {
   long i;            /* replication index                      */
-  long draw;         /* outcomes of draw from urn              */
   long B;     
   long W;     
   long u;            /* 1 if black on first draw; 0 otherwise  */
@@ -53,7 +52,8 @@ int main(void)
   long sum_uv = 0;
   double Pu, Pv, Puv;
   double sigma_u, sigma_v;
-  double gamma_uv, rho_uv;
+  double gamma_uv;
+  [[maybe_unused]] double rho_uv;
   /* 
   *  do N Monte Carlo replications 
   */
@@ -80,7 +80,7 @@ int main(void)
     sum_uv += u*v;
 
 #ifdef PLOT
-    printf("%d %d\n",u,v);
+    printf("%ld %ld\n",u,v);
 #endif 
   }
   /* 

@@ -4,8 +4,8 @@
  * Language        : ANSI C                                                  * 
  * Latest Revision : 09-11-95                                                * 
  * ------------------------------------------------------------------------- */
-#if !defined( _RNG_ )
-#define _RNG_
+#if !defined( RNG_H )
+#define RNG_H
 
 double Random(void);
 void   GetSeed(long *x);

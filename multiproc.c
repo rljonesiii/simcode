@@ -7,7 +7,7 @@
 
 #define BATCHSIZE      1000           /* batch size           */
 #define NUMBATCHES     1000           /* number of batches    */
-#define INFINITY       1e300          /* a large number       */
+#define NEVER       1e300          /* a large number       */
 
 #define ALPHA          1.0          
 #define BETA           (1-ALPHA)   

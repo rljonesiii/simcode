@@ -5,8 +5,8 @@
 *  Version:  30-April-97                                                      *
 *                                                                             *
 *******************************************************************************/
-#ifndef _queue_h
-#define _queue_h
+#ifndef QUEUE_H
+#define QUEUE_H
 
 #include "misc.h"
 
@@ -44,19 +44,19 @@ list *Next(list *);
 
 /* QUEUE DATA STRUCTURE */
 
-typedef long queue_type;
+typedef long queue_type;   /* a FIFO queue only needs to count its jobs */
 
-/* FIFI QUEUE OPERATIONS */
+/* FIFO QUEUE OPERATIONS (the item value is not stored) */
 
-#define CreateQueue(q)   (*q) = 0
-#define DeleteQueue(q)   (*q) = 0
-#define FlushQueue(q)    (*q) = 0
-#define IsEmpty(q)       (((*q) == 0) ? TRUE : FALSE)
-#define Number(q)        (*q)
-#define Insert(q,v)      ((*q)++)
-#define Remove(q,v)      ((*q)--)
+static inline void CreateQueue(queue_type *q) { *q = 0; }
+static inline void DeleteQueue(queue_type *q) { *q = 0; }
+static inline void FlushQueue(queue_type *q)  { *q = 0; }
+static inline bool IsEmpty(queue_type *q)     { return *q == 0; }
+static inline long Number(queue_type *q)      { return *q; }
+static inline void Insert(queue_type *q, [[maybe_unused]] item_type v) { (*q)++; }
+static inline void Remove(queue_type *q, [[maybe_unused]] item_type *v) { (*q)--; }
 
 #endif
 
-#endif /* _queue_h */
+#endif /* QUEUE_H */
 

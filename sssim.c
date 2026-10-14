@@ -20,40 +20,41 @@
  * ------------------------------------------------------------------------- 
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "rngs.h"              
 #include "rvgs.h"
 #include "rvms.h"
 #include "sort.h"
 
-#define _PLOT
-#define _OUTPUT_FOR_ESTIMATE
+/* #define PLOT */
+/* #define OUTPUT_FOR_ESTIMATE */
 
 #define BATCHSIZE      1000L          /* batch size           */
 #define NUMBATCHES     1000L          /* number of batches    */
 #define LOC            0.95           /* level of confidence  */
-#define INFINITY       1e300          /* a large number       */
+#define NEVER       1e300          /* a large number       */
 
-#define lambda         1.0            /* job arrival rate     */
-#define nu             1.25           /* job service rate     */
-#define BETA           0.0            /* feedback probability */
+static constexpr double lambda = 1.0;   /* job arrival rate     */
+static constexpr double nu     = 1.25;  /* job service rate     */
+static constexpr double BETA   = 0.0;   /* feedback probability */
 
 
-#define Min(a,b)       (a <= b) ? a : b;
+#define Min(a,b)       (((a) <= (b)) ? (a) : (b))
 
-double GetInterarrival()              
+static double GetInterarrival(void)              
 {
   SelectStream(0); 
   return (Exponential(1.0/lambda));
 } 
 
-double GetService()                 
+static double GetService(void)                 
 {
   SelectStream(1);
   return (Exponential(1.0/nu));
 } 
 
-int GetFeedback()
+static int GetFeedback(void)
 {
   SelectStream(2);
   if (Random() < BETA)
@@ -78,19 +79,26 @@ int main(void)
   long   index;             /* used to count departed jobs              */
   long   seed = 123456789;  /* random number generator seed             */
   double *wait;             /* to gather sample wait times              */
+  long   capacity;          /* wait[1..capacity] is allocated           */
   double aw;                /* batch mean of wait times                 */
   double avg_w, var_w;      /* mean, var of wait times from batch means */
-  double delta, u, tstar; 
+  double delta, u, tstar = 0.0; 
   /* 
   *  initialize 
   */
   PlantSeeds(seed);
-  //wait = (double *)calloc(BATCHSIZE*NUMBATCHES,sizeof(double));
-  wait = new double[BATCHSIZE*NUMBATCHES];
-  wait = &wait[-1];
+  /* wait[1..capacity], indexed by job number.  Arrivals run ahead of
+     departures, so the array grows on demand.  (2026: was a fixed C++
+     `new double[BATCHSIZE*NUMBATCHES]`, which the final arrivals overran.) */
+  capacity = BATCHSIZE*NUMBATCHES;
+  wait = (double *)calloc(capacity + 1, sizeof(double));
+  if (wait == nullptr) {
+    fprintf(stderr, "Error allocating memory.\n");
+    return EXIT_FAILURE;
+  }
   t.current    = 0.0;                           /* set the clock             */
   t.arrival    = t.current + GetInterarrival(); /* schedule first arrival    */
-  t.completion = INFINITY;                      /* first event != completion */
+  t.completion = NEVER;                      /* first event != completion */
   aindex = 0; 
   index  = 0; 
   avg_w  = 0.0;
@@ -116,6 +124,15 @@ int main(void)
 
       if (t.current == t.arrival)  {          /* process an arrival */
         aindex++;
+        if (aindex > capacity) {              /* make room for this job */
+          double *grown = (double *)realloc(wait, (2*capacity + 1)*sizeof(double));
+          if (grown == nullptr) {
+            fprintf(stderr, "Error allocating memory.\n");
+            return EXIT_FAILURE;
+          }
+          wait      = grown;
+          capacity *= 2;
+        }
         /* store arrival time for this job */
         wait[aindex] = t.arrival;
         number++;
@@ -138,7 +155,7 @@ int main(void)
           if (number > 0)
             t.completion = t.current + GetService();
           else
-            t.completion = INFINITY;
+            t.completion = NEVER;
          }
       }
     } /*end while*/ 

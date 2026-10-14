@@ -28,21 +28,21 @@ typedef struct {                        /* the next-event list    */
 } events;
 
 /* ============================ */
-   double Exponential(double m)
+   static double Exponential(double m)
 /* ============================ */
 {
   return (-m * log(1.0 - Random()));
 }
 
 /* ================================== */
-   double Uniform(double a, double b)
+   [[maybe_unused]] static double Uniform(double a, double b)
 /* ================================== */
 {
   return (a + (b - a) * Random());
 }
 
 /* ============================ */                    
-   double GetInterarrival(void)
+   static double GetInterarrival(void)
 /* ============================ */                    
 {     
   SelectStream(0);
@@ -50,7 +50,7 @@ typedef struct {                        /* the next-event list    */
 }
 
 /* ======================= */                              
-   double GetService(void)
+   static double GetService(void)
 /* ======================= */                              
 {                 
   SelectStream(1);                            
@@ -58,7 +58,7 @@ typedef struct {                        /* the next-event list    */
 }
 
 /* =============================== */
-   int NextEvent(events event[])
+   static int NextEvent(events event[])
 /* =============================== */
 {
   int e;                                      
@@ -76,7 +76,7 @@ typedef struct {                        /* the next-event list    */
 }
 
 /* ============================= */
-   int FindOne(events event[])
+   static int FindOne(events event[])
 /* ============================= */
 {
   int s;

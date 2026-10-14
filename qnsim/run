@@ -35,7 +35,7 @@ $initmsg
 
 set cfiles = "rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c $sim" 
 
-gcc $cf $def $cfiles $model -lm -o $target
+cc -std=c23 -Wall -Wextra -ffp-contract=off $cf $def $cfiles $model -lm -o $target
 
 if ("$model" != "") then
   $runmsg  
@@ -68,6 +68,6 @@ echo "  -d         debug   "
 echo "  -t         transient simulation (default is steady-state)"
 echo "  -sjf       use Shortest Job First queue (default is FIFO)"
 echo "  -x         apply extended (special) option $special" 
-echo "  -p         turns on output printing suitable for plotting"    
+echo "  -p         turns on output printing suitable for plotting"
 echo " "
 exit

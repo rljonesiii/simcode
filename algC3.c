@@ -6,6 +6,7 @@
 
   Algorithm C.3
 ******************************************************/
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "rvms.h"
@@ -18,16 +19,12 @@
 
 #define max(x,y) (((x) > (y)) ? (x) : (y))
 
-double log(double x);
-double exp(double x);
 
-void main()
+int main(void)
 {
   long x, i;           /* indices                 */
   long t;              /* rng stream              */
   long *o;             /* histogram               */
-  long num_below = 0;
-  long num_above = 0;
   long counter;
   long total = 0;
   double f;
@@ -39,11 +36,17 @@ void main()
   double diff;
   double F;            /* theoretic cdf           */
   double dt;           /* KS statistic            */
-  /* allocate memory */
-  o = (long *)calloc(k, sizeof(long));
-  o = &o[-1];
-  v = (double *)calloc(k, sizeof(double));
-  v = &v[-1];
+  /* allocate memory: o[0..k] is the run-length histogram and v[1..256]
+     holds one chi-square statistic per stream.  (2026: these used to be
+     allocated with k elements each, overrunning both arrays.) */
+  o = (long *)calloc(k + 1, sizeof(long));
+  v = (double *)calloc(256 + 1, sizeof(double));
+  if (o == nullptr || v == nullptr) {
+    fprintf(stderr, "Error allocating memory.\n");
+    free(o);
+    free(v);
+    return EXIT_FAILURE;
+  }
   /*
   *  determine critical values v1 and v2
   */
@@ -79,7 +82,7 @@ void main()
       }
       o[x] += 1;
     }
-    printf("number of calls to Random = %d\n",counter);
+    printf("number of calls to Random = %ld\n",counter);
     total += counter;
     /*
     *  compute chi-square statistic

@@ -26,11 +26,11 @@
 #define MAXREP    20000                   /* max replications               */
 
 #define STOP      200000.0                /* terminal (close the door) time */
-#define INFINITY  (100.0 * STOP)         /* must be much larger than STOP  */
+#define NEVER  (100.0 * STOP)         /* must be much larger than STOP  */
 #define BETA      0.0                    /* feedback probability           */
 
 /* ============================== */
-   double Min(double a, double c)
+   static double Min(double a, double c)
 /* ============================== */
 { 
   if (a < c)
@@ -40,21 +40,21 @@
 } 
 
 /* ============================ */
-   double Exponential(double m)
+   static double Exponential(double m)
 /* ============================ */
 {
   return (-m * log(1.0 - Random()));
 }
 
 /* ================================== */
-   double Uniform(double a, double b)
+   [[maybe_unused]] static double Uniform(double a, double b)
 /* ================================== */
 {
   return (a + (b - a) * Random());
 }
 
 /* ======================== */
-   double GetInterarrival()              /* returns an Exponential random */
+   static double GetInterarrival()              /* returns an Exponential random */
 /* ======================== */           /* variate with mean 2.0         */
 {
   SelectStream(0); 
@@ -62,7 +62,7 @@
 } 
 
 /* =================== */
-   double GetService()                   /* returns an Exponential random */
+   static double GetService()                   /* returns an Exponential random */
 /* =================== */                /* variate with mean 0.5         */
 {
   SelectStream(1);
@@ -70,7 +70,7 @@
 }  
 
 /* ================= */
-   int GetFeedback()
+   static int GetFeedback()
 /* ================= */
 {
   SelectStream(2);
@@ -108,7 +108,7 @@ for (rep = 1; rep <= MAXREP; rep++) {
   number       = 0;
   t.current    = 0.0;                           /* set the clock            */
   t.arrival    = t.current + GetInterarrival(); /* schedule first arrival   */
-  t.completion = INFINITY;                      /* first event != completion */
+  t.completion = NEVER;                      /* first event != completion */
 
   while ((t.arrival < STOP) || (number != 0)) {
     t.next          = Min(t.arrival, t.completion);  /* next event time   */
@@ -131,7 +131,7 @@ for (rep = 1; rep <= MAXREP; rep++) {
       t.arrival     = t.current + GetInterarrival();
       if (t.arrival > STOP)  {
         t.last      = t.current;
-        t.arrival   = INFINITY;
+        t.arrival   = NEVER;
       }
       if (number == 1)
         t.completion = t.current + GetService();
@@ -146,7 +146,7 @@ for (rep = 1; rep <= MAXREP; rep++) {
         if (number > 0)
           t.completion = t.current + GetService();
         else
-          t.completion = INFINITY;
+          t.completion = NEVER;
        }
     }
   } /*end while*/ 

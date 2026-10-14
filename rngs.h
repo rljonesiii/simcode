@@ -5,8 +5,8 @@
  * Latest Revision : 10-21-96                                              * 
  * ----------------------------------------------------------------------- */
 
-#if !defined( _RNGS_ )
-#define _RNGS_
+#if !defined( RNGS_H )
+#define RNGS_H
 
 double Random(void);
 void   GetSeed(long *x);

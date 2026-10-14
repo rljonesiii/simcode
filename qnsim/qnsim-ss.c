@@ -22,16 +22,15 @@
 
 #include "qnet.h"
 #include "qnsim.h"
-#include "queue.h"
 #include "misc.h"
 
 /* simulation parameters: */
 
 #define MAX_BATCHES      1000           /* maximum number of batches      */
-#define BATCH_SIZE       1000           /* batch size (must be > 1)       */
+#define BATCH_SIZE       1000L          /* batch size (must be > 1)       */
 #define INTERVAL_WIDTH   0.05           /* interval half width in percent */
 #define LOC              0.95           /* level of confidence            */
-#define INFINITY         1e300          /* a large number                 */
+#define NEVER            1e300          /* time of an event that will not occur */
 
 
 int main(void)
@@ -39,12 +38,6 @@ int main(void)
   MAIN PROGRAM
 *******************************************************************************/
 {
-  extern qnt        type;           /* either OPEN or CLOSED                  */
-  extern int        num_nodes;      /* number of service nodes                */
-  extern rv_func    *random_time;   /* service time random variate functions  */
-  extern queue_type *queue;         /* queue for each service node            */
-  extern actvty     *status;        /* status of each server: {IDLE,BUSY}     */
-  int    node;                      /* service node index                     */
   double *future_events;            /* future-events list                     */
   double clock;                     /* current simulation time                */
   double prev_clock;                /* previous sim time                      */
@@ -71,7 +64,7 @@ int main(void)
 
   /* create future-event list */
   future_events = (double *)calloc(num_nodes,sizeof(double)); 
-  if (future_events == NULL) {
+  if (future_events == nullptr) {
     error(MEM_ERR);
   }
 
@@ -84,15 +77,15 @@ int main(void)
     SelectStream(0);
     future_events[0] = random_time[0].func(); 
   } else {
-    future_events[0] = INFINITY; 
+    future_events[0] = NEVER; 
   }
   for (i = 1; i < num_nodes; i++) {         
-    if (IsEmpty(&queue[i]) == FALSE) {
+    if (IsEmpty(&queue[i]) == false) {
       num_jobs += Number(&queue[i]);
       ServiceJob(i,clock,future_events);
     } else {
       status[i]        = IDLE;
-      future_events[i] = INFINITY;                    
+      future_events[i] = NEVER;                    
     }
   }
 
@@ -125,11 +118,11 @@ int main(void)
         prev_clock   = clock;
         num_jobs++;     /* one more job in system */
       } else { /* process the departure */    
-        if (IsEmpty(&queue[current]) == FALSE) { 
+        if (IsEmpty(&queue[current]) == false) { 
           ServiceJob(current,clock,future_events); 
         } else {
           status[current] = IDLE;
-          future_events[current] = INFINITY;
+          future_events[current] = NEVER;
         }
       }
       /* place job in a destination service node */

@@ -15,7 +15,7 @@
 #define     p   0.51        /* birth probability, Pr{player P wins}  */
 #define     q   (1-p)       /* death probability, Pr{player P loses} */
 
-double N(int j)
+static double N(int j)
 {
   if (j == 1) {
     return(1.0);

@@ -13,7 +13,6 @@
 
 #include "qnet.h"
 #include "qnsim.h"
-#include "queue.h"
 #include "misc.h"
 
 /* simulation parameters: */
@@ -22,7 +21,7 @@
 #define MAX_EVENTS          100000          /* maximum events per replication */
 #define LOC                 0.95            /* level of confidence            */
 #define PREC                1.0e-2          /* for rounding data to this prec */
-#define INFINITY            1e300           /* a large number                 */
+#define NEVER               1e300           /* time of an event that will not occur */
 
 
 int main(void)
@@ -30,12 +29,6 @@ int main(void)
   MAIN PROGRAM
 *******************************************************************************/
 {
-  extern qnt        type;           /* either OPEN or CLOSED                  */
-  extern int        num_nodes;      /* number of service nodes                */
-  extern rv_func    *random_time;   /* service time random variate functions  */
-  extern queue_type *queue;         /* queue for each service node            */
-  extern actvty     *status;        /* status of each server: {IDLE,BUSY}     */
-  int    node;                      /* service node index                     */
   double *future_events;            /* future-events list                     */
   double clock;                     /* current simulation time                */
   long   i, j;                      /* general-purpose indices                */
@@ -45,14 +38,14 @@ int main(void)
   long   n;                         /* number of samples                      */
   double u = 1.0 - 0.5*(1.0 - LOC); /* interval parameter                     */ 
   double s, t, diff;                /* used to compute interval estimate      */             
-  long   num_jobs;                  /* total number of jobs in system         */
+  [[maybe_unused]] long num_jobs; /* total number of jobs in system         */
   long   num_arrivals       = 0;    /* counts # of external job arrivals      */
   long   num_departures     = 0;    /* counts # of external job departures    */
   double arrival_rate;              /* average external arrival rate          */
   double departure_rate;            /* average external departure rate        */
   double mean_arrivals      = 0.0;  /* mean # of arrivals until steady state  */
   double sumsqr_arrivals    = 0.0;  /* sum of squares to compute variance     */
-  double w;                         /* confidence interval half width         */                
+  [[maybe_unused]] double w;        /* confidence interval half width         */                
   
   /* initialize */
 
@@ -61,7 +54,7 @@ int main(void)
 
   /* create future-event list */
   future_events = (double *)calloc(num_nodes,sizeof(double)); 
-  if (future_events == NULL) {
+  if (future_events == nullptr) {
     error(MEM_ERR);
   }
 
@@ -87,16 +80,16 @@ int main(void)
       SelectStream(0);
       future_events[0] = random_time[0].func();
     } else {
-      future_events[0] = INFINITY;
+      future_events[0] = NEVER;
     }
     num_jobs = 0;
     for (i = 1; i < num_nodes; i++) {
-      if (IsEmpty(&queue[i]) == FALSE) {
+      if (IsEmpty(&queue[i]) == false) {
         num_jobs += Number(&queue[i]);
         ServiceJob(i,clock,future_events);
       } else {
         status[i]        = IDLE;
-        future_events[i] = INFINITY;
+        future_events[i] = NEVER;
       }
     }
     /* 
@@ -123,11 +116,11 @@ int main(void)
         num_arrivals++; 
         num_jobs++;     /* one more job in system */
       } else { /* process the departure */    
-        if (IsEmpty(&queue[current]) == FALSE) { 
+        if (IsEmpty(&queue[current]) == false) { 
           ServiceJob(current,clock,future_events); 
         } else {
           status[current] = IDLE;
-          future_events[current] = INFINITY;
+          future_events[current] = NEVER;
         }
       }
       /* place job in a destination service node */
@@ -156,7 +149,6 @@ int main(void)
 
     if (num_arrivals == MAX_EVENTS) {
       error("Maximum number of events was reached!\n");
-      exit(1);
     }
 
     /* compute mean number of external arrivals until steady state */
