@@ -1,0 +1,19 @@
+set term postscript eps
+set output "view.gps"
+set title "Transient Analysis"
+set xlabel "number of arrivals"
+set ylabel "Departure Rate"
+set zlabel "Number of Jobs in System"
+set size 1.0,0.8
+#set parametric
+#set xrange [:]
+set yrange [0:6]
+#set xtics ,,
+#set ytics ,,
+#set noxzeroaxis
+#set noyzeroaxis
+#set nokey
+#set key 0.03,32
+#splot 'view.gpd' using 1:3:4 title '' with lines
+plot 'view.gpd' using 1:2 title 'Arrival Rate' with lines, 'view.gpd' using 1:3 title 'Departure Rate' with lines
+#, 'view.gpd' using 1:4 title 'Number of Jobs in System' with steps

@@ -1,0 +1,25 @@
+# makefile
+
+CC = gcc
+
+allC = rngs.c rvgs.c qnet.c qnsim.c $1.c    
+
+
+allO = rngs.o rvgs.o qnet.o qnsim.o $1.o     
+
+
+# define DEBUG for debugging
+#CFLAGS = -g -DSUN -pedantic -Wall -W -Wshadow -Wconversion -Wtraditional
+CFLAGS = -g 
+
+objects:$(allO)
+
+$1 :    $(CC) $(CFLAGS) $(allc) $1.c -o $1 $(allO) $1.o -lm
+	@ echo Queuing Network Simulator, Version 1.0    
+	@ echo The simulation is starting.
+	@ $1    
+
+depend:
+	makedepend -- $(CFLAGS) -- $(allC)
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+

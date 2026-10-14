@@ -1,0 +1,114 @@
+/*
+*  Module:   qnet.c
+*
+*  Author:   Rob Jones
+*
+*  Purpose:  CSci 726 Discrete-Event Simulation: PROJECT #3 
+*            Provides the data structures and operations for the
+*            construction and simulation of a general queuing network.
+*
+*  Version:  4-14-97 
+*/
+
+#include "qnet.h"
+
+/* GLOBAL DATA: */
+
+char UseError[] = "Must first use function \"Nodes\" before \"Connect\" or \"Initial\".\n";
+
+QNT    type      = CLOSED;   /* assume closed network   */ 
+int    num_nodes = 0;        /* number of service nodes */
+long   *number   = NULL;     /* no. jobs in each node   */
+double **P       = NULL;     /* commulative prob matrix */
+
+/* OPERATIONS: */
+
+void Init()
+/* 
+*  called by main program to initialize data structures
+*/ 
+{
+  int i, j;
+
+  if (num_nodes > 0) {
+    /* compute cumulative probabilities across each row of P matrix */
+    for (i = 0; i < num_nodes; i++) {
+      for (j = 1; j < num_nodes; j++) {
+        P[i][j] += P[i][j-1];
+      }
+    }
+  } else { /* function Network was not used properly */
+    printf("Must specify queuing network with function \"Network\".\n");
+    exit(0);
+  }
+}
+
+void Nodes(int n)
+/*
+*  declares the number of service nodes and 
+*  allocates/initializes the required data structures 
+*/
+{
+  int i;
+
+  num_nodes = n + 1;  /* additional node for external I/O */
+  /* 
+  *  create probability matrix 
+  */
+  P = (double **)calloc(num_nodes,sizeof(double *)); /* allocate the rows    */
+  for (i = 0; i < num_nodes; i++) {                  /* allocate the columns */
+    P[i] = (double *)calloc(num_nodes,sizeof(double)); 
+  } 
+  /* 
+  *  create list indicating number of jobs in earch service node 
+  *  note: calloc initializes number[] to zero
+  */
+  number = (long *)calloc(num_nodes,sizeof(long));
+}
+
+void Connect(int i, int j, double p)
+/*
+*  user function that connects service node 'i' to node 'j' with probability 'p'
+*/
+{
+  if (P != NULL) {
+    if (i == 0) {
+      type = OPEN;
+    }
+    P[i][j] = p;
+  } else {
+    printf(UseError);
+    exit(0);
+  }
+}
+
+void Initial(int i, long j)
+/*
+*  user function that initializes service node 'i' with 'j' jobs
+*/
+{
+  if (number != NULL) {
+    number[i] = j;
+  } else {
+    printf(UseError);
+    exit(0);
+  }
+}
+
+int GetNextNode(int i)
+/*
+*  returns the destination node that receives the output of service node 'i'
+*/
+{
+  int    j;
+  double u;
+
+  SelectStream(i);
+  u = Random();
+  j = 0;
+  while (u > P[i][j]) {
+    j++;
+  }
+  return(j);
+}
+

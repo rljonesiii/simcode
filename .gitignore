@@ -1,0 +1,23 @@
+# test suite scratch builds
+tests/build/
+
+# compiled artifacts (rebuildable from source; the originals are SunOS SPARC
+# and Cygwin binaries that do not run here)
+*.o
+*.exe
+*.stackdump
+a.out
+sim.out
+/estimate
+/example954
+/qnsim/example954
+/gamble-eqn
+/input
+/model1
+/model2
+/mssim
+/sim
+
+# editor and debugger state
+_viminfo
+.gdb_history

@@ -1,0 +1,73 @@
+#!/bin/csh -f
+
+set initmsg  = "echo Building simulation."     
+set runmsg   = "echo Running simulation."
+set finalmsg = "echo Done."     
+set def      = ""            # use for #define statements
+set special  = "-DJACKSON"   # use this def to apply special features 
+set cf       = "-c"                            
+set model    = ""            # input (model) file name                           
+set target   = "sim.out"     # output (exec image) file name
+set sim      = "qnsim-ss.c"  # steady-state simulation is default                          
+
+foreach parm ($argv)
+  if ("$parm" == "-h") then
+    goto ERROR
+  else if ("$parm" == "-sjf") then
+    set def = "$def -DSJF_QUEUE"   
+  else if ("$parm" == "-t") then
+    set sim = "qnsim-ts.c"          
+  else if ("$parm" == "-x") then
+    set def = "$def $special"     
+  else if ("$parm" == "-p") then
+    set def = "$def -DPLOT"   
+  else if ("$parm" == "-d") then
+    set def = "$def -DDEBUG"
+    set cf  = "$cf -g"
+  else
+    set model  = "$parm.c"
+    set target = "$parm"
+    set cf     = ""
+  endif
+end
+
+$initmsg
+
+set cfiles = "rngs.c rvgs.c rvms.c queue.c misc.c qnet.c qnsim.c $sim" 
+
+gcc $cf $def $cfiles $model -lm -o $target
+
+if ("$model" != "") then
+  $runmsg  
+  ./$target
+endif
+
+$finalmsg
+
+exit
+
+ERROR:
+echo " "
+echo "SINGLE SERVER NETWORK SIMULATOR"
+echo " "
+echo "Version 1.0"
+echo " "
+echo "by Rob Jones"
+echo "   NASA Langley Research Center"
+echo " "
+echo "USAGE:"
+echo " "
+echo "  run [-h] [-d] [-t] [-x] [-sjf] [-p] [model_file_without_extension]"
+echo " "
+echo "  where [model_file_without_extension] is the input file name"
+echo " "
+echo "  option     function"
+echo "  ------     ----------------------------------------------"
+echo "  -h         help    "
+echo "  -d         debug   "
+echo "  -t         transient simulation (default is steady-state)"
+echo "  -sjf       use Shortest Job First queue (default is FIFO)"
+echo "  -x         apply extended (special) option $special" 
+echo "  -p         turns on output printing suitable for plotting"    
+echo " "
+exit

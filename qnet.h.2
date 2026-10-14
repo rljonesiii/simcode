@@ -1,0 +1,30 @@
+/******************************************************************************
+*  File: qnet.h                                                               *
+*******************************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "rngs.h"     /* random number generation package        */ 
+#include "rvgs.h"     /* functions for random variate generation */
+#include "rvms.h"     
+
+typedef enum {OPEN, CLOSED} qnt;
+typedef enum {IDLE, BUSY} actvty;
+
+typedef struct {double (*func)();} rv_func;
+  
+/* INTERNAL OPERATIONS: */
+
+void Init();
+int  GetNextNode(int i); 
+
+/* USER OPERATIONS: */
+
+void Network();                           
+void Nodes(int num);                      
+void Connect(int from, int to, double p); 
+void Initial(int i, long j);              
+void Service(int i, double (*func)());    
+void Arrival();                           
+

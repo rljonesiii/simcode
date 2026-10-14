@@ -1,0 +1,7 @@
+set sim    = "SIM=sim"
+set model  = "MODEL=$1"
+set target = "run"
+make $sim $model 
+# make CC=gcc CFLAGS="-g -Wall -Wtraditional" $sim $model
+make CC=gcc CFLAGS="-g" $sim $model $target
+

@@ -1,0 +1,35 @@
+
+SYSINCLUDES = -I/usr/include
+MYINCLUDES = -I.
+#LINKINCLUDES =  -L/usr/local/gnu/lib -Xlinker -R /usr/local/egcs/lib 
+STDLIBS     = -lm -lfl
+
+SOURCES = rngs.c rvgs.c rvms.c montecarloint.c
+
+OBJS = $(SOURCES:.c=.o) 
+
+ALLCCS = $(SOURCES) 
+
+ALLHHS = $(ALLCCS:.c=.h)
+
+ALLOBJS = $(OBJS) 
+
+MOREFLAGS       = -g
+LINKFLAGS 	= $(PLAT_LINK) $(LINKINCLUDES)
+CXX 		= g++
+CC		= g++
+CPPFLAGS 	= $(MOREFLAGS) -Wall $(SYSINCLUDES) $(MYINCLUDES) $(PLAT_FLAGS)
+EXES		= mci
+
+all:	$(EXES)
+
+mci : $(ALLOBJS)
+	$(CXX) $(LINKFLAGS) $(ALLOBJS) -o mci $(STDLIBS) $(PLAT_LIBS)
+
+depend:
+	cd $(SOURCEDIR); g++ $(CPPFLAGS) -MM $(ALLCCS) > ./make.depend
+
+clean :
+	rm -f *.o $(EXES) errlog.dat 
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

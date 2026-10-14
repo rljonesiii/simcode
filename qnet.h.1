@@ -1,0 +1,24 @@
+/*
+*  File: qnet.h
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "rngs.h"     /* random number generation package        */ 
+#include "rvgs.h"     /* functions for random variate generation */
+
+typedef enum {FALSE = 0, TRUE = 1} BOOL;
+typedef enum {OPEN, CLOSED} QNT;
+
+/* INTERNAL OPERATIONS: */
+void Init();
+int  GetNextNode(int i); 
+
+/* USER OPERATIONS: */
+
+void   Network();                           /* used to create queuing network (QN)       */
+void   Nodes(int num);                      /* used to declare the number of QN nodes    */
+void   Connect(int from, int to, double p); /* connects 'from' node to 'to' node         */
+void   Initial(int i, long j);              /* initialize service node 'i' with 'j' jobs */
+double GetExternalArrival();                /* returns arrival events from outside       */
+double GetService(int i);                   /* returns service time for service node 'i' */

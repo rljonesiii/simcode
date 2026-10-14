@@ -1,0 +1,311 @@
+/******************************************************************************
+*  Module:   qnsim.c                                                          *
+*                                                                             *
+*  Author:   Rob Jones                                                        *
+*                                                                             *
+*  Purpose:  CSci 726 Discrete-Event Simulation: PROJECT #3                   *
+*            Provides main simulation program for a general-purpose           *
+*            steady-state simulation of a queuing network consisting          *
+*            of single server nodes.                                          *
+*                                                                             *
+*  Version:  4-29-97                                                          *
+*******************************************************************************/
+
+#include "qnet.h"
+#include "queue.h"
+#include "misc.h"
+
+/* 
+*  SIMULATION PARAMETERS:
+*/
+#define dEBUG 
+#define STEADY_STATE   /* define this for steady-state simulation
+                          otherwise terminating simulation will be done */
+
+#define N                5000           /* number of batches/replications */
+#define BATCH_SIZE       1000           /* batch size (must be > 1)       */
+#define INTERVAL_WIDTH   0.05           /* interval half width in percent */
+#define LOC              0.95           /* level of confidence            */
+#define INFINITY         1e300          /* a large number                 */
+
+double *future_events;   /* future-events list */
+double job_time = 0;     /* job service time   */
+
+void ProcessArrival(long i, double time)
+{
+  extern rv_func    *random_time;  /* sample function  */
+  extern actvty     *status;       /* server status    */
+  extern queue_type *queue;        /* service queue    */
+
+  if (status[i] == IDLE) { /* if idle then service job */
+    status[i] = BUSY;
+    SelectStream(i);
+    future_events[i] = time + random_time[i].func();
+  } else { /* otherwise, add job to queue */
+
+#ifdef SJF_QUEUE /* if SJF then sample/store service time */
+    SelectStream(i);
+    job_time = random_time[i].func(); 
+#endif
+
+    Insert(&queue[i],job_time);
+  }
+}
+
+void ServiceJob(long i, double time)
+{
+  extern rv_func    *random_time;  /* sample function  */
+  extern actvty     *status;       /* server status    */
+  extern queue_type *queue;        /* service queue    */
+
+  Remove(&queue[i],&job_time);
+
+#ifdef SJF_QUEUE /* if SJF then service time is already stored */
+
+  future_events[i] = time + job_time;
+
+#else /* otherwise sample service-time function */
+
+  SelectStream(i);
+  future_events[i] = time + random_time[i].func();
+
+#endif
+  status[i] = BUSY;
+}
+
+int main(void)
+/******************************************************************************
+  MAIN PROGRAM
+*******************************************************************************/
+{
+  extern qnt        type;           /* either OPEN or CLOSED                  */
+  extern int        num_nodes;      /* number of service nodes                */
+  extern rv_func    *random_time;   /* service time random variate functions  */
+  extern queue_type *queue;         /* queue for each service node            */
+  extern actvty     *status;        /* status of each server: {IDLE,BUSY}     */
+  int    node;                      /* service node index                     */
+  double clock;                     /* current simulation time                */
+  double prev_clock;                /* previous sim time                      */
+  double init_clock;                /* time at start of batch                 */
+  long   i, j;                      /* general-purpose indices                */
+  long   index;                     /* batch/replication index                */
+  long   count;                     /* within-batch job index                 */
+  long   current, next;             /* service node indices                   */
+  long   seed = 123456789;          /* random number seed                     */
+  long   n;
+  double u, s, t, w, diff;
+  /* statistic of interest...        */
+  long   num_jobs        = 0;       /* total number of jobs in system         */
+  double area_number;               /* to compute E[num_jobs] & E[mean_wait]  */
+  double mean_num_jobs   = 0.0; 
+  double mean_wait       = 0.0; 
+  double sumsqr_num_jobs = 0.0;
+  double sumsqr_wait     = 0.0;
+  double width_mean_num_jobs;       /* confidence interval half widths        */
+  double width_mean_wait; 
+  
+  /* INITIALIZE */
+
+  Network();          /* get specification of queuing network */
+
+  /* create future-event list */
+  future_events = (double *)calloc(num_nodes,sizeof(double)); 
+  if (future_events == NULL) {
+    error(MEM_ERR);
+  }
+
+#ifdef STEADY_STATE /* USING METHOD OF BATCH MEANS */
+
+  Init();             /* initialize of network data structures */ 
+  PlantSeeds(seed);
+  clock      = 0.0;   /* reset clock */                           
+  prev_clock = clock;
+
+  /* schedule first events */
+  if (type == OPEN) {
+    SelectStream(0);
+    future_events[0] = random_time[0].func(); 
+  } else {
+    future_events[0] = INFINITY; 
+  }
+  for (i = 1; i < num_nodes; i++) {         
+    if (IsEmpty(&queue[i]) == FALSE) {
+      num_jobs += Number(&queue[i]);
+      ServiceJob(i,clock);
+    } else {
+      future_events[i] = INFINITY;                    
+    }
+  }
+  /* simulate N batches */
+  for (index = 1; index <= N; index++) { 
+
+    /* re-initialize the statistics only */
+
+    count       = 0;
+    init_clock  = clock;
+    area_number = 0.0;
+
+    while (count < BATCH_SIZE) {
+
+#else /* ELSE TRANSIENT ANALYSIS USING REPLICATIONS */
+
+  /* replicate the simulation N times */
+  for (index = 1; index <= N; index++) {
+
+    /* re-initialize the state and statistics for each replication */ 
+
+    /* pick a different seed for each replication */
+    SelectStream(0); GetSeed(&seed); PlantSeeds(seed);
+
+    Init();              /* initialize of network data structures */
+    count       = 0;
+    clock       = 0.0;   
+    prev_clock  = clock;
+    init_clock  = clock;
+    area_number = 0.0;
+
+    /* schedule first events */
+    if (type == OPEN) {
+      SelectStream(0);
+      future_events[0] = random_time[0].func();
+    } else {
+      future_events[0] = INFINITY;
+    }
+    for (i = 1; i < num_nodes; i++) {
+      if (IsEmpty(&queue[i]) == FALSE) {
+        num_jobs += Number(&queue[i]);
+        ServiceJob(i,clock);
+      } else {
+        future_events[i] = INFINITY;
+      }
+    }
+
+    while (/* need some stopping criteria here */) {
+
+#endif
+      /* get next (most imminent) event */
+      current = 0; 
+      for (j = 0; j < num_nodes; j++) {
+        if (future_events[j] < future_events[current]) {
+          current = j;
+        }
+      }
+      clock = future_events[current]; /* advance the clock */
+
+      /* if event was an outside arrival then schedule a new one */
+      if (current == 0) {
+        SelectStream(0);
+        future_events[current] = clock + random_time[current].func();
+ 
+        area_number += num_jobs*(clock - prev_clock);
+        prev_clock   = clock;
+
+        num_jobs++;  /* one more job in system */
+
+      } else { /* process the departure */    
+        if (IsEmpty(&queue[current]) == FALSE) { 
+          ServiceJob(current,clock); /* service next job in queue */
+        } else {
+          status[current] = IDLE;
+          future_events[current] = INFINITY;
+        }
+      }
+      /* place job in a destination service node */
+
+      next = GetNextNode(current); 
+
+      if (next == 0) { /* if departure from system then */
+        area_number += num_jobs*(clock - prev_clock);
+        prev_clock   = clock;
+        num_jobs--;           /* one less job in system    */
+        count++;              /* count jobs leaving system */
+      } else { 
+        ProcessArrival(next,clock);
+      }          
+    } /*end while*/ 
+
+    /* compute mean number of jobs in system */
+    diff = area_number/(clock-init_clock) - mean_num_jobs;
+    sumsqr_num_jobs += diff*diff*(index - 1.0)/index;
+    mean_num_jobs   += diff/index;
+
+    /* compute mean wait time of a job */
+    diff = area_number/count - mean_wait;
+    sumsqr_wait += diff*diff*(index - 1.0)/index;
+    mean_wait   += diff/index;
+
+    /* check on how we're doing every 10 samples */
+    if (index % 10 == 0) {
+      n = index;                    /* the number of samples */
+      u = 1.0 - 0.5*(1.0 - LOC);    /* interval parameter    */
+      t = idfStudent(n - 1, u);     /* critical value of t   */
+
+      /* compute interval half width for mean_num_jobs       */
+      s = sqrt(sumsqr_num_jobs/n);  /* standard deviation    */
+
+      width_mean_num_jobs = t*s/sqrt(n - 1); 
+
+      /* compute interval half width for mean_wait           */
+      s = sqrt(sumsqr_wait/n);      /* standard deviation    */
+
+      width_mean_wait = t*s/sqrt(n - 1);
+
+      w = max(width_mean_num_jobs/mean_num_jobs, 
+              width_mean_wait/mean_wait);
+      if (w <= INTERVAL_WIDTH) {
+        break;
+      }
+    }
+
+/*=================================================*/
+#ifdef DEBUG
+    printf("%ld \t",index);
+    printf("%f \t",area_number/(clock-init_clock));
+    printf("%f\n",area_number/count);
+#endif
+/*=================================================*/
+
+  }/* end for */
+    
+    if (index > N) { 
+      n = N;                        /* the number of samples */
+      u = 1.0 - 0.5*(1.0 - LOC);    /* interval parameter    */
+      t = idfStudent(n - 1, u);     /* critical value of t   */
+
+      /* compute interval half width for mean_num_jobs       */
+      s = sqrt(sumsqr_num_jobs/n);  /* standard deviation    */
+
+      width_mean_num_jobs = t*s/sqrt(n - 1);
+
+      /* compute interval half width for mean_wait           */
+      s = sqrt(sumsqr_wait/n);      /* standard deviation    */
+
+      width_mean_wait = t*s/sqrt(n - 1);
+
+      w = max(width_mean_num_jobs/mean_num_jobs, 
+              width_mean_wait/mean_wait);
+    }
+
+  /* print results */
+
+#ifndef DEBUG
+#ifdef STEADY_STATE
+    printf("\nSteady-State Simulation\n");
+#else
+    printf("\nTransient Simulation:\n");
+#endif
+    printf("  sample points......:  %ld\n",n);
+    printf("  confidence level...:  %g%%\n",LOC*100.0);
+    printf("  confidence interval:  +/- %g%%\n",INTERVAL_WIDTH*100.0);
+    if (w > INTERVAL_WIDTH) {
+      printf("\nAt least one measure did not reach desired interval width.\n");
+    }
+    printf("\n");
+    printf("Expected number of jobs in the system:  %.4f +/- %.4f\n",
+            mean_num_jobs,width_mean_num_jobs);
+    printf("Expected wait time of a job..........:  %.4f +/- %.4f\n",
+            mean_wait,width_mean_wait);
+#endif
+  return (0);
+}
+

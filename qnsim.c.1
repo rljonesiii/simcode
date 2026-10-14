@@ -1,0 +1,149 @@
+/*
+*  Module:   qnsim.c
+*
+*  Author:   Rob Jones
+*
+*  Purpose:  CSci 726 Discrete-Event Simulation: PROJECT #3 
+*            Provides main simulation program for a general-purpose 
+*            steady-state simulation of a queuing network consisting 
+*            of single server nodes.
+*
+*  Version:  4-14-97 
+*/
+
+#include "qnet.h"
+
+/* 
+*  SIMULATION PARAMETERS:
+*/
+#define BATCH_SIZE     1000           /* batch size (must be > 1) */
+#define NUM_BATCHES    1000           /* number of batches        */
+#define LOC            0.95           /* level of confidence      */
+#define INFINITY       1e300          /* a large number           */
+
+#define _DEBUG 
+
+void Print(long *x, long n)
+/* 
+*  FOR DEBUGGING
+*/
+{
+  int i;
+
+  for (i = 0; i < n; i++) {
+    printf("%10ld ",x[i]);
+  }
+  printf("\n");
+}
+
+int main(void)
+/*
+*  main program
+*/
+{
+  extern QNT    type;        /* OPEN or CLOSED          */
+  extern int    num_nodes;   /* number of service nodes */
+  extern long   *number;     /* number in the node      */
+  int    node;               /* service node index      */
+  double clock;              /* current simulation time */
+  double *future_events;     /* future-events list      */
+  long   i, j;               /* general-purpose indices */
+  long   batch;              /* batch index             */
+  long   count;              /* within-batch job index  */
+  long   current, next;      /* service node indices    */
+  long   seed = 123456789;   /* random number seed      */
+                             /* statistic of interest...*/
+  double *area_number;
+  double prev_clock;
+  double init_clock;
+
+  /* INITIALIZE */
+  Network(); /* get specification of queuing network  */
+  Init();    /* initialize of network data structures */ 
+
+  /* for statistics */
+  area_number = (double *)calloc(num_nodes,sizeof(double));
+
+  /* create future-event list */
+  future_events = (double *)calloc(num_nodes,sizeof(double));
+
+  PlantSeeds(seed);
+  clock = 0.0; /* reset clock */                           
+  prev_clock  = clock;
+
+  /* schedule first events */
+  if (type == OPEN) {
+    future_events[0] = GetExternalArrival(); 
+  } else {
+    future_events[0] = INFINITY; 
+  }
+  for (i = 1; i < num_nodes; i++) {         
+    if (number[i] > 0) {
+      future_events[i] = GetService(i);                    
+    } else {
+      future_events[i] = INFINITY;                    
+    }
+  }
+  /* BEGIN SIMULATION */
+  for (batch = 1; batch <= NUM_BATCHES; batch++) { 
+    /* re-initialize the batch statistics */
+
+    count = 0;
+
+    for (i = 0; i < num_nodes; i++) {
+      area_number[i] = 0.0;
+    }
+    init_clock = clock;
+
+    while (count < BATCH_SIZE) {
+
+#ifdef DEBUG
+      if (1) Print(number,num_nodes);
+#endif
+
+      /* get next (most imminent) event */
+      current = 0; 
+      for (j = 0; j < num_nodes; j++) {
+        if (future_events[j] < future_events[current]) {
+          current = j;
+        }
+      }
+      clock = future_events[current]; /* advance the clock */
+
+      for (i = 0; i < num_nodes; i++) {
+        area_number[i] += number[i]*(clock-prev_clock);
+      }
+      prev_clock = clock;
+
+      /* if event was an outside arrival then schedule a new one */
+      if (current == 0) {
+        future_events[current] = GetExternalArrival();
+      } else { /* a departure */    
+        number[current]--;
+        if (number[current] > 0) { /* service next job if present */
+          future_events[current] = clock + GetService(current);
+        } else {
+          future_events[current] = INFINITY;
+        }
+      }
+      /* place job in a destination service node */
+      next = GetNextNode(current); 
+      number[next]++; 
+
+      /* if destination node is idle then schedule the new job's departure */
+      if (next != 0 && number[next] > 0) { 
+        future_events[next] = clock + GetService(next);
+      }          
+ 
+      count++; 
+
+    } /*end while*/ 
+
+#ifndef DEBUG
+    printf("%f\n",area_number[1]/(clock-init_clock));
+#endif
+
+  }/* end for */
+  return (0);
+}
+
